@@ -1,0 +1,161 @@
+{
+  "version": "1.0",
+  "description": "Skill activation rules for Python projects - customize for your stack",
+  "skills": [
+    {
+      "name": "skill-developer",
+      "type": "suggest",
+      "priority": "high",
+      "description": "Helps create new skills following best practices",
+      "keywords": [
+        "skill system",
+        "create skill",
+        "new skill",
+        "skill template",
+        "hook system"
+      ],
+      "intentPatterns": [
+        "(how do|how does).*?skill",
+        "(create|build|make).*?skill",
+        "skill.*?(work|activate|trigger)"
+      ],
+      "filePaths": [
+        ".claude/skills/**/*.md",
+        ".claude/hooks/**/*.py"
+      ],
+      "message": "💡 Consider using the `/skill-developer` skill for creating well-structured skills with auto-activation rules."
+    },
+    {
+      "name": "backend-dev-guidelines",
+      "type": "suggest",
+      "priority": "high",
+      "description": "FastAPI backend patterns with SQLAlchemy, Alembic, async/await, pytest",
+      "keywords": [
+        "fastapi",
+        "endpoint",
+        "route",
+        "router",
+        "api",
+        "sqlalchemy",
+        "alembic",
+        "model",
+        "schema",
+        "pydantic",
+        "async",
+        "await",
+        "depends",
+        "dependency",
+        "orm",
+        "migration",
+        "database",
+        "service",
+        "repository",
+        "kafka",
+        "producer",
+        "consumer",
+        "event",
+        "message",
+        "broker"
+      ],
+      "intentPatterns": [
+        "(create|add|implement|build).*?(endpoint|route|api|router)",
+        "(setup|configure|add).*?(database|model|schema)",
+        "(write|create|add).*?(migration|alembic)",
+        "how.*?(structure|organize).*?(fastapi|backend)",
+        "(async|asynchronous).*?(function|endpoint|route)",
+        "(kafka|event).*?(producer|consumer|publish|subscribe)",
+        "(send|publish|emit).*?(message|event)",
+        "(consume|listen|subscribe).*?(message|event|kafka)"
+      ],
+      "filePaths": [
+        "**/api/**/*.py",
+        "**/routes/**/*.py",
+        "**/routers/**/*.py",
+        "**/models/**/*.py",
+        "**/schemas/**/*.py",
+        "**/services/**/*.py",
+        "**/repositories/**/*.py",
+        "**/app/**/*.py",
+        "**/alembic/**/*.py",
+        "**/events/**/*.py",
+        "**/kafka/**/*.py",
+        "**/producers/**/*.py",
+        "**/consumers/**/*.py"
+      ],
+      "message": "💡 The `/backend-dev-guidelines` skill provides FastAPI best practices including async patterns, dependency injection, SQLAlchemy usage, Kafka event streaming, and testing strategies."
+    },
+    {
+      "name": "route-tester",
+      "type": "suggest",
+      "priority": "high",
+      "description": "pytest patterns for FastAPI testing with async, fixtures, and authentication",
+      "keywords": [
+        "test",
+        "pytest",
+        "testing",
+        "fixture",
+        "mock",
+        "httpx",
+        "asyncclient",
+        "api test",
+        "integration test",
+        "endpoint test"
+      ],
+      "intentPatterns": [
+        "(test|verify|check).*?(endpoint|route|api)",
+        "(write|create|add).*?test",
+        "how.*?test.*?(api|endpoint|fastapi)"
+      ],
+      "filePaths": [
+        "**/tests/**/*.py",
+        "**/test_*.py",
+        "**/*_test.py"
+      ],
+      "message": "💡 The `/route-tester` skill provides pytest patterns for testing FastAPI endpoints with AsyncClient, fixtures, mocking, and authentication."
+    },
+    {
+      "name": "error-tracking",
+      "type": "suggest",
+      "priority": "high",
+      "description": "Sentry integration and error handling patterns for FastAPI",
+      "keywords": [
+        "sentry",
+        "error",
+        "exception",
+        "httpexception",
+        "logging",
+        "error handling",
+        "exception handling",
+        "traceback",
+        "middleware"
+      ],
+      "intentPatterns": [
+        "(add|setup|configure).*?sentry",
+        "(track|log|capture).*?(error|exception)",
+        "(error|exception).*?(handling|tracking|middleware)"
+      ],
+      "filePaths": [
+        "**/logging/**/*.py",
+        "**/errors/**/*.py",
+        "**/exceptions/**/*.py",
+        "**/middleware/**/*.py"
+      ],
+      "message": "💡 Use `/error-tracking` for Sentry integration and FastAPI exception handling patterns including middleware."
+    }
+  ],
+  "globalSettings": {
+    "enableSkillSuggestions": true,
+    "maxSuggestionsPerPrompt": 2,
+    "priorityOrder": ["critical", "high", "medium", "low"],
+    "cacheMatchResults": true
+  },
+  "customization": {
+    "notes": [
+      "CUSTOMIZE THIS FILE FOR YOUR PROJECT",
+      "1. Update keywords to match your domain and patterns",
+      "2. Adjust file patterns to match your directory structure (app/ vs src/ vs api/)",
+      "3. Add project-specific skill rules for your unique patterns",
+      "4. Set appropriate priorities for your team's workflow"
+    ]
+  }
+}

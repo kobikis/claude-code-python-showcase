@@ -1,0 +1,8 @@
+# Python hook dependencies
+# These are standard library dependencies - no external packages needed
+
+# For type checking (optional)
+mypy>=1.0.0
+
+# For code quality (optional)
+ruff>=0.1.0

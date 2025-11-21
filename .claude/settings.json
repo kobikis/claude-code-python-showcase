@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-postgres", "postgresql://user:password@localhost/dbname"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+    }
+  },
+  "permissions": {
+    "edit": "allow",
+    "write": "allow",
+    "multiEdit": "allow",
+    "notebookEdit": "allow",
+    "bash": "allow"
+  },
+  "defaultEditMode": "accept",
+  "hooks": {
+    "UserPromptSubmit": "python .claude/hooks/skill-activation-prompt.py",
+    "PostToolUse": "python .claude/hooks/post-tool-use-tracker.py",
+    "Stop": "python .claude/hooks/mypy-check.py"
+  },
+  "pythonEnvironment": {
+    "venvPath": ".venv",
+    "pythonExecutable": "python3",
+    "packageManager": "pip"
+  },
+  "customization": {
+    "notes": [
+      "IMPORTANT: This settings.json uses EXAMPLE configurations",
+      "You MUST customize these for your actual project:",
+      "- Update database connection strings",
+      "- Set your Python virtual environment path",
+      "- Adjust file patterns in skill-rules.json",
+      "- Match your project directory structure"
+    ]
+  }
+}
