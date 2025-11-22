@@ -99,7 +99,10 @@ class ProjectSetup:
             "resilience-patterns",
             "async-kafka",
             "pydantic-v2-migration",
-            "event-driven-patterns"
+            "event-driven-patterns",
+            "pytorch-patterns",
+            "huggingface-models",
+            "model-optimization"
         ]
 
         skills_dir = self.claude_dir / "skills"
@@ -125,7 +128,8 @@ class ProjectSetup:
             "webhook-validator",
             "kafka-optimizer",
             "security-auditor",
-            "async-converter"
+            "async-converter",
+            "ai-engineer"
         ]
 
         for agent_name in agents:
