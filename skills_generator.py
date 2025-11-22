@@ -8,6 +8,19 @@ import json
 from pathlib import Path
 from typing import List
 
+# Import AI/ML skill content
+try:
+    from skills_content import (
+        PYTORCH_CONTENT,
+        HUGGINGFACE_CONTENT,
+        MODEL_OPTIMIZATION_CONTENT
+    )
+except ImportError:
+    # Fallback if file not found
+    PYTORCH_CONTENT = "# PyTorch Patterns\n\nContent to be added."
+    HUGGINGFACE_CONTENT = "# HuggingFace Models\n\nContent to be added."
+    MODEL_OPTIMIZATION_CONTENT = "# Model Optimization\n\nContent to be added."
+
 
 SKILL_TEMPLATES = {
     "webhook-security": {
@@ -614,6 +627,46 @@ class EventPublisher:
 - DLQ message count
 - Operation timeouts
 """
+    },
+
+    "pytorch-patterns": {
+        "description": "PyTorch best practices, model training, and inference patterns",
+        "keywords": ["pytorch", "torch", "neural network", "model", "training", "inference", "gpu", "cuda", "tensor"],
+        "intent_patterns": [
+            "(pytorch|torch).*?(model|training|inference)",
+            "(train|training).*?(model|neural network)",
+            "(gpu|cuda).*?(optimization|memory)",
+            "tensor.*?(operation|manipulation)"
+        ],
+        "file_paths": ["**/models/**/*.py", "**/training/**/*.py", "**/*model*.py"],
+        "content": PYTORCH_CONTENT
+    },
+
+    "huggingface-models": {
+        "description": "HuggingFace transformers integration and best practices",
+        "keywords": ["huggingface", "transformers", "pretrained", "tokenizer", "pipeline", "bert", "gpt", "t5", "sam"],
+        "intent_patterns": [
+            "(huggingface|transformers).*?(model|load)",
+            "(pretrained|from_pretrained).*?model",
+            "tokenizer.*?(usage|encoding)",
+            "(bert|gpt|t5|llama|sam).*?(model|fine-tune)"
+        ],
+        "file_paths": ["**/models/**/*.py", "**/services/**/*.py", "**/*transformer*.py"],
+        "content": HUGGINGFACE_CONTENT
+    },
+
+    "model-optimization": {
+        "description": "Model optimization techniques including quantization, pruning, and distillation",
+        "keywords": ["quantization", "pruning", "optimization", "onnx", "tensorrt", "distillation", "inference"],
+        "intent_patterns": [
+            "(optimize|optimizing).*?model",
+            "(quantize|quantization).*?model",
+            "(prune|pruning).*?(model|network)",
+            "(speed up|faster).*?inference",
+            "model.*?(compression|optimization)"
+        ],
+        "file_paths": ["**/optimization/**/*.py", "**/models/**/*.py"],
+        "content": MODEL_OPTIMIZATION_CONTENT
     },
 }
 
