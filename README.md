@@ -60,6 +60,7 @@ After 6 months of FastAPI development with Claude Code, these patterns emerged a
 
 **MCP Server Integration** 🆕
 - **Task Master AI**: AI-powered task management, PRD parsing, and research
+- **GitHub**: Repository management, file operations, issues, PRs, and CI/CD
 - **PostgreSQL**: Direct database access for queries and schema inspection
 - **Sequential Thinking**: Enhanced reasoning for complex problems
 - **Playwright**: Browser automation and E2E testing
@@ -111,8 +112,8 @@ If you've already installed this infrastructure and want to update:
 ### What's New
 - ✅ **New Skills**: route-tester (pytest patterns), error-tracking (Sentry)
 - ✅ **New Agent**: vapi-ai-expert (Voice AI integration)
-- ✅ **MCP Support**: Task Master AI for task management and research
-- ✅ **Documentation**: MCP_SETUP.md, UPDATE_TARGET_PROJECT.md
+- ✅ **MCP Support**: Task Master AI, GitHub (repo management), and 3 more servers
+- ✅ **Documentation**: MCP_SETUP.md, UPDATE_TARGET_PROJECT.md, TROUBLESHOOTING_MCP.md
 
 See [UPDATE_TARGET_PROJECT.md](UPDATE_TARGET_PROJECT.md) for detailed update instructions and manual update steps.
 

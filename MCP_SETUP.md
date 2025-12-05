@@ -32,7 +32,7 @@ Each MCP server runs as a separate process and communicates with Claude Code thr
 
 ## Installed MCP Servers
 
-This project includes configuration for **4 MCP servers**:
+This project includes configuration for **5 MCP servers**:
 
 ### 1. PostgreSQL Server
 **Purpose**: Direct PostgreSQL database access for queries and schema inspection
@@ -95,6 +95,27 @@ This project includes configuration for **4 MCP servers**:
 - Task prioritization
 - Development workflow management
 
+### 5. GitHub ⭐ NEW
+**Purpose**: GitHub repository management and API integration
+
+**Capabilities**:
+- Repository operations (browse, search, clone)
+- File operations (read, create, update, delete)
+- Issue and PR management
+- Branch and commit operations
+- GitHub Actions workflow monitoring
+- Code search across repositories
+- Organization and team management
+
+**Use Cases**:
+- Automated repository management
+- Issue and PR creation/updates
+- Code review automation
+- Repository analysis
+- CI/CD pipeline monitoring
+- Team collaboration workflows
+- Bulk repository operations
+
 ---
 
 ## Setup Instructions
@@ -115,6 +136,9 @@ ANTHROPIC_API_KEY=sk-ant-xxx          # For Claude models
 PERPLEXITY_API_KEY=pplx-xxx           # For research features
 OPENAI_API_KEY=sk-xxx                 # Optional: OpenAI models
 GOOGLE_API_KEY=xxx                    # Optional: Gemini models
+
+# GitHub (if using GitHub MCP)
+GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx  # Get from: https://github.com/settings/tokens
 
 # Database (if using PostgreSQL MCP)
 DATABASE_URL=postgresql://user:password@localhost/dbname
@@ -146,6 +170,13 @@ The MCP servers are already configured in `.claude/settings.json`:
         "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}",
         "PERPLEXITY_API_KEY": "${PERPLEXITY_API_KEY}",
         "TASK_MASTER_TOOLS": "standard"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
     }
   }
@@ -214,6 +245,36 @@ Or use environment variable:
   }
 }
 ```
+
+### GitHub Server
+
+**Creating a GitHub Personal Access Token**:
+
+1. Go to: https://github.com/settings/tokens
+2. Click "Generate new token" → "Generate new token (classic)"
+3. Select scopes:
+   - ✅ `repo` - Full control of private repositories
+   - ✅ `read:org` - Read org and team membership
+   - ✅ `workflow` - Update GitHub Action workflows (optional)
+4. Generate and copy your token
+
+**Required Scopes**:
+- `repo` - Repository operations (required)
+- `read:org` - Organization access (required)
+- `workflow` - GitHub Actions (optional, for CI/CD features)
+
+**Configuration in settings.json**:
+```json
+"github": {
+  "command": "npx",
+  "args": ["-y", "@modelcontextprotocol/server-github"],
+  "env": {
+    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+  }
+}
+```
+
+**Security Note**: Never commit your GitHub token. Always use environment variables.
 
 ---
 
@@ -294,6 +355,55 @@ Updates task status programmatically.
 "Write a test to check if the login form works"
 "Take a screenshot of the homepage"
 "Test if the checkout flow works end-to-end"
+```
+
+### GitHub Server Examples
+
+#### Repository Operations
+```
+"List all repositories in my account"
+"Show me the contents of the README.md in my-repo"
+"Search for files containing 'authentication' in my-repo"
+"Create a new repository called my-new-project"
+```
+
+#### File Operations
+```
+"Read the package.json file from my-repo"
+"Create a new file called CONTRIBUTING.md in my-repo"
+"Update the README.md with installation instructions"
+"Delete the old config file from my-repo"
+```
+
+#### Issue Management
+```
+"Create an issue titled 'Add user authentication' in my-repo"
+"List all open issues in my-repo"
+"Close issue #42 in my-repo"
+"Add a comment to issue #15 saying 'Working on this'"
+```
+
+#### Pull Request Operations
+```
+"Create a PR to merge feature-branch into main"
+"List all open pull requests in my-repo"
+"Review the changes in PR #23"
+"Merge pull request #15"
+```
+
+#### Branch Operations
+```
+"Create a new branch called feature-authentication"
+"List all branches in my-repo"
+"Delete the old-feature branch"
+"Show recent commits on main branch"
+```
+
+#### CI/CD & Actions
+```
+"Show the status of GitHub Actions in my-repo"
+"List failed workflow runs"
+"Check the build status for the latest commit"
 ```
 
 ---
@@ -479,6 +589,9 @@ GOOGLE_API_KEY=xxx                       # Optional
 # Task Master AI Settings (Optional)
 TASK_MASTER_TOOLS=standard               # Options: core, standard, all
 
+# GitHub (Optional - for GitHub MCP)
+GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx     # Get from: https://github.com/settings/tokens
+
 # Database (Optional - for PostgreSQL MCP)
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 
@@ -512,4 +625,4 @@ If you encounter issues:
 ---
 
 **Last Updated**: 2025-12-05
-**Configured Servers**: PostgreSQL, Sequential Thinking, Playwright, Task Master AI
+**Configured Servers**: PostgreSQL, Sequential Thinking, Playwright, Task Master AI, GitHub

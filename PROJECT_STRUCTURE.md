@@ -88,8 +88,8 @@ claude-code-python-showcase/
 - **Skills**: 5 skills (4 fully implemented, 1 planned)
 - **Agents**: 11 agent configs (3 implemented, 8 planned)
 - **Commands**: 3 slash commands (1 implemented, 2 planned)
-- **Documentation**: 9 markdown files (including MCP_SETUP.md)
-- **MCP Servers**: 4 configured (PostgreSQL, Sequential Thinking, Playwright, Task Master AI)
+- **Documentation**: 10 markdown files (including MCP_SETUP.md, TROUBLESHOOTING_MCP.md)
+- **MCP Servers**: 5 configured (PostgreSQL, Sequential Thinking, Playwright, Task Master AI, GitHub)
 - **Configuration**: .env.example with MCP and FastAPI settings
 - **Examples**: 1 complete example (dev/active/example-feature)
 
@@ -121,6 +121,7 @@ claude-code-python-showcase/
 
 **MCP Servers**:
 - Task Master AI (task management, PRD parsing, AI research)
+- GitHub (repository management, file operations, issues, PRs, CI/CD)
 - PostgreSQL (database access)
 - Sequential Thinking (enhanced reasoning)
 - Playwright (browser automation)
