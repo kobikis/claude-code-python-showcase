@@ -49,6 +49,7 @@ After 6 months of FastAPI development with Claude Code, these patterns emerged a
 **10 Specialized Agents**
 - Architecture reviewers for Python services
 - Refactoring experts for legacy Python code
+- Vapi.ai voice AI integration expert
 - Documentation generators
 - Error resolution specialists
 
@@ -56,6 +57,14 @@ After 6 months of FastAPI development with Claude Code, these patterns emerged a
 - `/dev-docs`: Structured development documentation
 - `/api-spec`: OpenAPI/Swagger generation
 - `/test-coverage`: Coverage analysis and improvement
+
+**MCP Server Integration** 🆕
+- **Task Master AI**: AI-powered task management, PRD parsing, and research
+- **PostgreSQL**: Direct database access for queries and schema inspection
+- **Sequential Thinking**: Enhanced reasoning for complex problems
+- **Playwright**: Browser automation and E2E testing
+
+See [MCP_SETUP.md](MCP_SETUP.md) for full setup guide and usage examples.
 
 ## Quick Integration Guide
 
@@ -82,6 +91,30 @@ Type: "I need to add a new API endpoint"
 ### Phase 4: Expand (Optional)
 
 Add agents, commands, or create custom skills using the skill-developer pattern.
+
+## Updating an Existing Installation
+
+If you've already installed this infrastructure and want to update:
+
+### Quick Update
+
+```bash
+# Update all components (creates automatic backup)
+./update_component.sh /path/to/your/target/project all
+
+# Update only specific components
+./update_component.sh /path/to/your/target/project skills
+./update_component.sh /path/to/your/target/project agents
+./update_component.sh /path/to/your/target/project mcp
+```
+
+### What's New
+- ✅ **New Skills**: route-tester (pytest patterns), error-tracking (Sentry)
+- ✅ **New Agent**: vapi-ai-expert (Voice AI integration)
+- ✅ **MCP Support**: Task Master AI for task management and research
+- ✅ **Documentation**: MCP_SETUP.md, UPDATE_TARGET_PROJECT.md
+
+See [UPDATE_TARGET_PROJECT.md](UPDATE_TARGET_PROJECT.md) for detailed update instructions and manual update steps.
 
 ## Key Patterns
 

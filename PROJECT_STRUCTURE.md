@@ -9,9 +9,11 @@ claude-code-python-showcase/
 ├── README.md                           # Main documentation
 ├── QUICKSTART.md                       # 5-minute quick start guide
 ├── CLAUDE_INTEGRATION_GUIDE.md         # Detailed integration instructions
+├── MCP_SETUP.md                        # MCP server setup and configuration guide
 ├── PROJECT_STRUCTURE.md                # This file
 ├── LICENSE                             # MIT License
 ├── .gitignore                          # Git ignore patterns
+├── .env.example                        # Environment variables template
 │
 ├── .claude/                            # Claude Code configuration
 │   ├── settings.json                   # Main settings
@@ -42,15 +44,16 @@ claude-code-python-showcase/
 │   │   │   └── resources/ (planned)
 │   │   │
 │   │   ├── route-tester/               # pytest-asyncio testing patterns
-│   │   │   └── SKILL.md (planned)
+│   │   │   └── SKILL.md                # Complete testing guide
 │   │   │
 │   │   └── error-tracking/             # Sentry + FastAPI middleware
-│   │       └── SKILL.md (planned)
+│   │       └── SKILL.md                # Complete error tracking guide
 │   │
 │   ├── agents/                         # Specialized agent configs
 │   │   ├── README.md                   # Agent documentation
 │   │   ├── architecture-reviewer.md    # Review system architecture
 │   │   ├── refactor-planner.md         # Plan large refactorings
+│   │   ├── vapi-ai-expert.md           # Vapi.ai voice AI integration
 │   │   ├── code-refactor-master.md (planned)
 │   │   ├── python-code-reviewer.md (planned)
 │   │   ├── auto-error-resolver.md (planned)
@@ -82,10 +85,12 @@ claude-code-python-showcase/
 ## File Counts
 
 - **Hooks**: 3 Python implementations + README + requirements.txt
-- **Skills**: 5 skills (2 fully implemented, 3 planned)
-- **Agents**: 10 agent configs (2 implemented, 8 planned)
+- **Skills**: 5 skills (4 fully implemented, 1 planned)
+- **Agents**: 11 agent configs (3 implemented, 8 planned)
 - **Commands**: 3 slash commands (1 implemented, 2 planned)
-- **Documentation**: 7 markdown files
+- **Documentation**: 9 markdown files (including MCP_SETUP.md)
+- **MCP Servers**: 4 configured (PostgreSQL, Sequential Thinking, Playwright, Task Master AI)
+- **Configuration**: .env.example with MCP and FastAPI settings
 - **Examples**: 1 complete example (dev/active/example-feature)
 
 ## Implementation Status
@@ -97,17 +102,32 @@ claude-code-python-showcase/
 - Python hooks (skill activation, post-tool-use tracker, mypy check)
 - Skill rules configuration
 - Integration guides
+- MCP server configuration (4 servers)
+- Environment variable templates
 
 **Skills**:
 - backend-dev-guidelines (main + 2 resources)
 - skill-developer (complete)
+- route-tester (complete testing guide)
+- error-tracking (complete error tracking guide)
 
 **Agents**:
 - architecture-reviewer
 - refactor-planner
+- vapi-ai-expert
 
 **Commands**:
 - dev-docs
+
+**MCP Servers**:
+- Task Master AI (task management, PRD parsing, AI research)
+- PostgreSQL (database access)
+- Sequential Thinking (enhanced reasoning)
+- Playwright (browser automation)
+
+**Documentation**:
+- MCP_SETUP.md (complete setup guide)
+- .env.example (environment configuration)
 
 **Examples**:
 - Complete feature development example (TASK/CONTEXT/PLAN)
@@ -116,8 +136,6 @@ claude-code-python-showcase/
 
 **Skills**:
 - frontend-dev-guidelines
-- route-tester
-- error-tracking
 
 **Resources**:
 - sqlalchemy-guide.md
@@ -205,6 +223,8 @@ touch .claude/commands/my-command.md
 **Starting point**: `README.md`
 **Quick setup**: `QUICKSTART.md`
 **Detailed integration**: `CLAUDE_INTEGRATION_GUIDE.md`
+**MCP server setup**: `MCP_SETUP.md`
+**Environment config**: `.env.example`
 **Creating skills**: `.claude/skills/skill-developer/SKILL.md`
 **Hook details**: `.claude/hooks/README.md`
 **Example feature**: `dev/active/example-feature/`
