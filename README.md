@@ -61,6 +61,7 @@ After 6 months of FastAPI development with Claude Code, these patterns emerged a
 **MCP Server Integration** 🆕
 - **Task Master AI**: AI-powered task management, PRD parsing, and research
 - **GitHub**: Repository management, file operations, issues, PRs, and CI/CD
+- **Atlassian**: Jira issue tracking and Confluence documentation (OAuth)
 - **PostgreSQL**: Direct database access for queries and schema inspection
 - **Sequential Thinking**: Enhanced reasoning for complex problems
 - **Playwright**: Browser automation and E2E testing

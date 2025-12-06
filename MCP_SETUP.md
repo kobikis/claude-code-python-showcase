@@ -32,7 +32,7 @@ Each MCP server runs as a separate process and communicates with Claude Code thr
 
 ## Installed MCP Servers
 
-This project includes configuration for **5 MCP servers**:
+This project includes configuration for **6 MCP servers**:
 
 ### 1. PostgreSQL Server
 **Purpose**: Direct PostgreSQL database access for queries and schema inspection
@@ -115,6 +115,28 @@ This project includes configuration for **5 MCP servers**:
 - CI/CD pipeline monitoring
 - Team collaboration workflows
 - Bulk repository operations
+
+### 6. Atlassian (Jira + Confluence) ⭐ NEW
+**Purpose**: Jira issue tracking and Confluence documentation management
+
+**Capabilities**:
+- **Jira**: Search, create, and update issues
+- **Jira**: Bulk ticket generation from natural language
+- **Jira**: Sprint and project management
+- **Confluence**: Search and summarize pages
+- **Confluence**: Create and update documentation
+- **Confluence**: Navigate spaces and content
+- Cross-link Jira issues with Confluence pages
+- Respects user permissions from Atlassian Cloud
+
+**Use Cases**:
+- Creating Jira tickets from meeting notes
+- Summarizing Confluence documentation
+- Bulk issue creation and updates
+- Documentation generation and updates
+- Sprint planning and backlog management
+- Knowledge base search and navigation
+- Project status reporting
 
 ---
 
@@ -276,6 +298,55 @@ Or use environment variable:
 
 **Security Note**: Never commit your GitHub token. Always use environment variables.
 
+### Atlassian Server (Jira + Confluence)
+
+**Authentication Method**: OAuth 2.0 (Browser-based)
+
+The official Atlassian MCP server uses OAuth authentication, which means:
+- ✅ No API tokens to manage
+- ✅ Respects your Atlassian Cloud permissions
+- ✅ Secure browser-based authentication
+- ⚠️ Requires Node.js v18 or higher
+
+**Configuration in settings.json**:
+```json
+"atlassian": {
+  "command": "npx",
+  "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/sse"]
+}
+```
+
+**First-Time Setup**:
+
+1. **Restart Claude Code** after adding the configuration
+2. **Browser authentication** will automatically open
+3. **Sign in** with your Atlassian Cloud credentials
+4. **Authorize** the requested permissions (Jira and Confluence access)
+5. **Return to Claude Code** once approved
+
+**Important Notes**:
+- Works with Atlassian Cloud only (not Server/Data Center)
+- Access respects your existing Jira and Confluence permissions
+- Admins can revoke access via Atlassian Admin → Connect apps
+
+**Alternative: Docker-based Setup with API Tokens**
+
+If you prefer API token authentication (more complex but more control):
+
+1. Get API tokens from: https://id.atlassian.com/manage-profile/security/api-tokens
+2. Use Docker image: `docker pull ghcr.io/sooperset/mcp-atlassian:latest`
+3. Set environment variables:
+   ```bash
+   JIRA_URL=https://your-domain.atlassian.net
+   JIRA_USERNAME=your-email@example.com
+   JIRA_API_TOKEN=your_token
+   CONFLUENCE_URL=https://your-domain.atlassian.net/wiki
+   CONFLUENCE_USERNAME=your-email@example.com
+   CONFLUENCE_API_TOKEN=your_token
+   ```
+
+See [sooperset/mcp-atlassian](https://github.com/sooperset/mcp-atlassian) for Docker setup details.
+
 ---
 
 ## Usage Examples
@@ -404,6 +475,57 @@ Updates task status programmatically.
 "Show the status of GitHub Actions in my-repo"
 "List failed workflow runs"
 "Check the build status for the latest commit"
+```
+
+### Atlassian (Jira + Confluence) Examples
+
+#### Jira - Issue Management
+```
+"Search for all open issues assigned to me"
+"Create a Jira issue titled 'Add user authentication'"
+"Show details for issue KEY-123"
+"Update issue KEY-123 to add a comment"
+"Move issue KEY-123 to 'In Progress' status"
+"Close issue KEY-123 as completed"
+```
+
+#### Jira - Bulk Operations
+```
+"Create Jira tickets from these meeting notes: [paste notes]"
+"Generate issues from this spec document"
+"List all issues in the current sprint"
+"Show all bugs with high priority"
+```
+
+#### Jira - Project Management
+```
+"Show all issues in project ABC"
+"List issues updated in the last 7 days"
+"Find all unassigned issues in the backlog"
+"Show sprint burndown for current sprint"
+```
+
+#### Confluence - Documentation Search
+```
+"Search Confluence for 'API documentation'"
+"Summarize the page about authentication"
+"Show me pages in the Engineering space"
+"Find documentation about deployment process"
+```
+
+#### Confluence - Content Creation
+```
+"Create a Confluence page titled 'Architecture Overview'"
+"Update the API documentation page with these changes"
+"Add a child page to the existing documentation"
+"Create a new space called 'Product Specs'"
+```
+
+#### Cross-Integration
+```
+"Create a Jira issue and link it to this Confluence page"
+"Find all Confluence pages linked to issue KEY-123"
+"Generate Confluence documentation from Jira project KEY"
 ```
 
 ---
@@ -592,6 +714,10 @@ TASK_MASTER_TOOLS=standard               # Options: core, standard, all
 # GitHub (Optional - for GitHub MCP)
 GITHUB_PERSONAL_ACCESS_TOKEN=ghp_xxx     # Get from: https://github.com/settings/tokens
 
+# Atlassian (Optional - Jira + Confluence)
+# Note: Official Atlassian MCP uses OAuth (no env vars needed)
+# It will open a browser for authentication on first use
+
 # Database (Optional - for PostgreSQL MCP)
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 
@@ -625,4 +751,4 @@ If you encounter issues:
 ---
 
 **Last Updated**: 2025-12-05
-**Configured Servers**: PostgreSQL, Sequential Thinking, Playwright, Task Master AI, GitHub
+**Configured Servers**: PostgreSQL, Sequential Thinking, Playwright, Task Master AI, GitHub, Atlassian (Jira + Confluence)

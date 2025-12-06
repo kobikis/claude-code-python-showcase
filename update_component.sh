@@ -140,9 +140,65 @@ update_mcp() {
         cp "$SHOWCASE_DIR/.claude/settings.json" "$target_path/.claude/settings.json"
         print_warning "Please update database connection strings and other settings"
     else
-        print_warning "settings.json exists. You need to manually merge MCP configuration."
-        print_info "Add the task-master-ai entry from showcase's settings.json"
-        print_info "See UPDATE_TARGET_PROJECT.md for details"
+        print_info "Merging MCP servers into existing settings.json..."
+
+        # Use Python to safely merge MCP servers
+        python3 << EOF
+import json
+import sys
+
+try:
+    # Read showcase settings to get MCP servers
+    with open('$SHOWCASE_DIR/.claude/settings.json', 'r') as f:
+        showcase_settings = json.load(f)
+
+    # Read target settings
+    with open('$target_path/.claude/settings.json', 'r') as f:
+        target_settings = json.load(f)
+
+    # Ensure mcpServers exists in target
+    if 'mcpServers' not in target_settings:
+        target_settings['mcpServers'] = {}
+
+    # Merge MCP servers from showcase
+    showcase_mcps = showcase_settings.get('mcpServers', {})
+    added = []
+    updated = []
+
+    for server_name, server_config in showcase_mcps.items():
+        if server_name not in target_settings['mcpServers']:
+            target_settings['mcpServers'][server_name] = server_config
+            added.append(server_name)
+        else:
+            # Server exists - check if it's different
+            if target_settings['mcpServers'][server_name] != server_config:
+                # Keep existing (don't overwrite user customizations)
+                updated.append(f"{server_name} (kept existing)")
+
+    # Write back
+    with open('$target_path/.claude/settings.json', 'w') as f:
+        json.dump(target_settings, f, indent=2)
+        f.write('\n')
+
+    # Print results
+    if added:
+        print(f"Added MCP servers: {', '.join(added)}")
+    if updated:
+        print(f"Existing servers unchanged: {', '.join(updated)}")
+
+    sys.exit(0)
+
+except Exception as e:
+    print(f"Error merging settings: {e}", file=sys.stderr)
+    sys.exit(1)
+EOF
+
+        if [ $? -eq 0 ]; then
+            print_success "MCP servers merged successfully"
+        else
+            print_error "Failed to merge MCP servers automatically"
+            print_info "Please manually add MCP servers from showcase's settings.json"
+        fi
     fi
 
     # Copy .env.example if not exists
@@ -159,7 +215,7 @@ update_mcp() {
         print_info "Then add your API keys"
     fi
 
-    print_success "MCP configuration updated (manual merge may be needed)"
+    print_success "MCP configuration updated"
 }
 
 update_docs() {
