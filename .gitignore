@@ -1,66 +1,24 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
-venv/
-env/
-ENV/
-.venv
-
-# IDEs
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.hypothesis/
-
-# Type checking
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pytype/
-
-# Claude Code
-.claude/settings.local.json
-dev/active/
-*.log
-
-# Environment
+*.pyo
+.venv/
 .env
-.env.local
-.env.*.local
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# Credentials (never commit)
+*.creds
+*.pem
+*.key
+.pg_*.creds
+secrets/
 
-# Alembic
-alembic/versions/__pycache__/
+# Claude session data (ephemeral, not config)
+.claude/skills/learned/
+.claude/skills/*/cache/
+.claude/settings.local.json
+.claude/cache/
+.claude/history.jsonl
+.claude/audit.log
+
+# OS
+.DS_Store

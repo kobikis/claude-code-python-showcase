@@ -1,0 +1,39 @@
+{
+  "description": "MCP server configurations. Replace ${CLAUDE_SCRIPTS_DIR} with ~/.claude/scripts/, ${CLAUDE_DIR} with ~/.claude/, ${PROJECT_DIR} with your project root.",
+  "mcpServers": {
+    "cmem": {
+      "type": "stdio",
+      "command": "cmem",
+      "args": [
+        "mcp"
+      ]
+    },
+    "atlassian": {
+      "type": "sse",
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "args": []
+    },
+    "mermaid": {
+      "type": "stdio",
+      "command": "claude-mermaid",
+      "args": [],
+      "env": {}
+    },
+    "postgres-customer": {
+      "type": "stdio",
+      "command": "${CLAUDE_DIR}/scripts/pg-mcp.sh",
+      "args": [
+        "${PROJECT_DIR}/.pg_customer.creds"
+      ],
+      "env": {}
+    },
+    "postgres-processing": {
+      "type": "stdio",
+      "command": "${CLAUDE_DIR}/scripts/pg-mcp.sh",
+      "args": [
+        "${PROJECT_DIR}/.pg_processing.creds"
+      ],
+      "env": {}
+    }
+  }
+}

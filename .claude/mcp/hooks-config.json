@@ -1,0 +1,91 @@
+{
+  "Notification": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "osascript -e 'display notification \"Claude Code needs your attention\" with title \"Claude Code\" sound name \"Ping\"'",
+          "description": "Hook 1: Desktop notification when Claude is idle"
+        }
+      ]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "FILE=$(echo \"$CLAUDE_TOOL_INPUT\" | jq -r '.file_path // empty' 2>/dev/null); [ -z \"$FILE\" ] && FILE=$(cat | jq -r '.tool_input.file_path // empty' 2>/dev/null); [[ \"$FILE\" == *.py ]] && { ruff check --fix \"$FILE\" 2>/dev/null; black \"$FILE\" 2>/dev/null; } || true",
+          "description": "Hook 2: Auto ruff+black on Python file edits"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "cat | jq -c --arg ts \"$(date '+%Y-%m-%d %H:%M:%S')\" '{timestamp: $ts, command: .tool_input.command, exit_code: .tool_response.exit_code}' >> ~/.claude/audit.log 2>/dev/null || true",
+          "description": "Hook 5: Audit log all bash commands"
+        }
+      ]
+    }
+  ],
+  "PreToolUse": [
+    {
+      "matcher": "Edit|Write",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ~/.claude/hooks/protect-files.sh",
+          "description": "Hook 3: Block edits to protected files (.env, *.pem, credentials, etc.)"
+        }
+      ]
+    },
+    {
+      "matcher": "Bash",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ~/.claude/hooks/block-dangerous-bash.sh",
+          "description": "Hook 4: Block dangerous bash commands (rm -rf /, sudo rm, curl|bash, etc.)"
+        }
+      ]
+    },
+    {
+      "matcher": "mcp__postgres__.*",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "python3 ~/.claude/hooks/validate-sql.py",
+          "description": "Hook 8: Validate SQL before MCP PostgreSQL queries"
+        }
+      ]
+    }
+  ],
+  "SessionStart": [
+    {
+      "matcher": "compact",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "bash ~/.claude/hooks/session-context.sh",
+          "description": "Hook 7: Re-inject project context after compaction"
+        }
+      ]
+    }
+  ],
+  "Stop": [
+    {
+      "hooks": [
+        {
+          "type": "command",
+          "command": "echo \"[$(date '+%Y-%m-%d %H:%M:%S')] Session ended\" >> ~/.claude/session-log.txt && cd \"$CLAUDE_PROJECT_DIR\" 2>/dev/null && git diff --stat HEAD >> ~/.claude/session-log.txt 2>/dev/null || true",
+          "description": "Hook 10: Session summary on stop"
+        }
+      ]
+    }
+  ]
+}

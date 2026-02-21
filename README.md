@@ -1,280 +1,182 @@
-# Claude Code Python Infrastructure Showcase
+# Claude Code Python Showcase
 
-> **Production-tested patterns for Claude Code in FastAPI projects**
-> Extracted from real-world FastAPI microservices development
+> Production-ready Claude Code infrastructure for Python projects — with automatic skill routing, specialist agents, and personal config management.
 
-## What This Is
+## What This Repo Is
 
-This is a **reference library**, not a working application. It contains reusable infrastructure components that solve the fundamental Claude Code challenge: **skills don't activate automatically**.
+Two things in one:
 
-After 6 months of FastAPI development with Claude Code, these patterns emerged as essential for maintaining efficient, context-aware AI assistance.
-
-## The Core Problem It Solves
-
-**Without this infrastructure:**
-- You manually invoke skills: `/backend-guidelines`, `/test-pattern`, etc.
-- Claude doesn't know your project's conventions
-- You repeat the same instructions every session
-- Skills sit unused while you forget they exist
-
-**With this infrastructure:**
-- Skills activate when you need them, not when you remember them
-- Claude suggests relevant patterns based on your prompt and file context
-- Your project conventions become enforceable guardrails
-- Development patterns stay consistent across your team
-
-## What's Included
-
-### Essential Components (Start Here)
-
-**1. Auto-Activation System**
-- Hooks analyze prompts and file paths to suggest relevant skills
-- Configured via `.claude/skills/skill-rules.json`
-- Works with Python file patterns: `**/api/**/*.py`, `**/tests/**/*.py`, etc.
-
-**2. Production Skills**
-- **backend-dev-guidelines**: FastAPI patterns, SQLAlchemy, Alembic, Kafka, async/await, testing
-- **skill-developer**: Meta-skill for creating new skills
-- **route-tester**: pytest patterns for FastAPI testing
-- **error-tracking**: Sentry integration for FastAPI
-
-**3. Core Hooks**
-- **skill-activation-prompt**: Suggests skills based on context (Python implementation)
-- **post-tool-use-tracker**: Tracks edit patterns and suggests improvements
-- **mypy-check**: Type checking on session stop
-- **pytest-runner**: Test validation hooks
-
-### Advanced Components
-
-**10 Specialized Agents**
-- Architecture reviewers for Python services
-- Refactoring experts for legacy Python code
-- Vapi.ai voice AI integration expert
-- Documentation generators
-- Error resolution specialists
-
-**Slash Commands**
-- `/dev-docs`: Structured development documentation
-- `/api-spec`: OpenAPI/Swagger generation
-- `/test-coverage`: Coverage analysis and improvement
-
-**MCP Server Integration** 🆕
-- **Task Master AI**: AI-powered task management, PRD parsing, and research
-- **GitHub**: Repository management, file operations, issues, PRs, and CI/CD
-- **Atlassian**: Jira issue tracking and Confluence documentation (OAuth)
-- **PostgreSQL**: Direct database access for queries and schema inspection
-- **Sequential Thinking**: Enhanced reasoning for complex problems
-- **Playwright**: Browser automation and E2E testing
-
-See [MCP_SETUP.md](MCP_SETUP.md) for full setup guide and usage examples.
-
-## Quick Integration Guide
-
-### Phase 1: Core Hooks (15 minutes)
-
-1. Copy `.claude/hooks/skill-activation-prompt.py` to your project
-2. Copy `.claude/hooks/post-tool-use-tracker.py` to your project
-3. Update `.claude/settings.json` to enable hooks
-4. Install Python dependencies: `pip install -r .claude/hooks/requirements.txt`
-
-### Phase 2: First Skill (10 minutes)
-
-1. Choose a skill that matches your stack (FastAPI, Django, Flask)
-2. Copy the skill directory to `.claude/skills/`
-3. Customize the skill rules in `skill-rules.json`
-4. Test by typing a prompt that should trigger it
-
-### Phase 3: Verification (5 minutes)
-
-Type: "I need to add a new API endpoint"
-- Expected: Claude suggests `/backend-dev-guidelines` skill
-- If not working: Check hook execution in settings
-
-### Phase 4: Expand (Optional)
-
-Add agents, commands, or create custom skills using the skill-developer pattern.
-
-## Updating an Existing Installation
-
-If you've already installed this infrastructure and want to update:
-
-### Quick Update
-
-```bash
-# Update all components (creates automatic backup)
-./update_component.sh /path/to/your/target/project all
-
-# Update only specific components
-./update_component.sh /path/to/your/target/project skills
-./update_component.sh /path/to/your/target/project agents
-./update_component.sh /path/to/your/target/project mcp
-```
-
-### What's New
-- ✅ **New Skills**: route-tester (pytest patterns), error-tracking (Sentry)
-- ✅ **New Agent**: vapi-ai-expert (Voice AI integration)
-- ✅ **MCP Support**: Task Master AI, GitHub (repo management), and 3 more servers
-- ✅ **Documentation**: MCP_SETUP.md, UPDATE_TARGET_PROJECT.md, TROUBLESHOOTING_MCP.md
-
-See [UPDATE_TARGET_PROJECT.md](UPDATE_TARGET_PROJECT.md) for detailed update instructions and manual update steps.
-
-## Key Patterns
-
-### The 500-Line Rule
-
-Skills follow a modular structure:
-- Main `SKILL.md` file stays under 500 lines (overview + navigation)
-- Detailed patterns go in `resources/*.md` files
-- Claude loads content progressively, avoiding context limits
-
-### Progressive Disclosure
-
-```
-User Prompt → Hook Analysis → Skill Suggestion → Load Main Guide → Load Specific Resource
-```
-
-This prevents "context explosion" while keeping all knowledge accessible.
-
-### FastAPI-Specific Conventions
-
-All patterns are adapted for FastAPI:
-- Async/await patterns
-- Pydantic v2 for validation
-- Dependency injection
-- SQLAlchemy 2.0 with async support
-- Kafka event streaming (aiokafka)
-- pytest with pytest-asyncio
-- Type hints everywhere
-- OpenAPI/Swagger documentation
-- Background tasks
-- ASGI deployment
-
-## Integration Example
-
-```json
-// .claude/settings.json
-{
-  "hooks": {
-    "UserPromptSubmit": "python .claude/hooks/skill-activation-prompt.py",
-    "PostToolUse": "python .claude/hooks/post-tool-use-tracker.py",
-    "Stop": "python .claude/hooks/mypy-check.py"
-  }
-}
-```
-
-```json
-// .claude/skills/skill-rules.json (excerpt)
-{
-  "skills": [
-    {
-      "name": "backend-dev-guidelines",
-      "type": "suggest",
-      "priority": "high",
-      "keywords": ["fastapi", "endpoint", "router", "async", "pydantic", "sqlalchemy"],
-      "intentPatterns": [
-        "(create|add|implement).*?(route|endpoint|api)",
-        "(async|asynchronous).*?(function|endpoint)"
-      ],
-      "filePaths": ["**/api/**/*.py", "**/routers/**/*.py", "**/routes/**/*.py"]
-    }
-  ]
-}
-```
-
-## File Structure
-
-```
-.claude/
-├── settings.json              # Main configuration
-├── settings.local.json        # Environment-specific overrides
-├── hooks/
-│   ├── skill-activation-prompt.py
-│   ├── post-tool-use-tracker.py
-│   ├── mypy-check.py
-│   └── requirements.txt
-├── skills/
-│   ├── skill-rules.json
-│   ├── backend-dev-guidelines/
-│   │   ├── SKILL.md
-│   │   └── resources/
-│   ├── frontend-dev-guidelines/
-│   ├── skill-developer/
-│   ├── route-tester/
-│   └── error-tracking/
-├── agents/
-│   ├── architecture-reviewer.md
-│   ├── refactor-planner.md
-│   └── ...
-└── commands/
-    ├── dev-docs.md
-    └── api-spec.md
-
-dev/
-└── active/
-    └── current-feature/
-        ├── TASK.md
-        ├── CONTEXT.md
-        └── PLAN.md
-```
-
-## Customization Guide
-
-### Adapt for Your Domain
-
-1. **Update Keywords**: Edit `skill-rules.json` with your domain entities and business logic terms
-2. **File Patterns**: Match your project structure (`src/`, `app/`, `api/`)
-3. **Code Examples**: Add your domain-specific examples to skills
-4. **Project Patterns**: Create custom skills for your unique workflows
-
-### Example Domain
-
-The skills use a generic blog API (Post/Comment/User) for teaching purposes. Replace with your domain:
-
-```python
-# Blog domain example:
-class Post(Base):
-    __tablename__ = "posts"
-    title: Mapped[str] = mapped_column(String(200))
-    content: Mapped[str] = mapped_column(Text)
-
-# Your domain example (e-commerce):
-class Product(Base):
-    __tablename__ = "products"
-    name: Mapped[str] = mapped_column(String(200))
-    price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
-```
-
-## Important Notes
-
-**This is NOT a copy-paste solution**. The `settings.json` uses example structures. You must:
-- Match your actual directory layout (app/ vs src/ vs api/)
-- Use your domain entities and business logic
-- Customize keywords and file patterns
-- Adapt for your team's conventions
-
-**Token Management**: The modular design keeps Claude's context under control. Even large FastAPI codebases stay manageable.
-
-**Hook Performance**: Python hooks add ~100-200ms per prompt. Perfect for FastAPI development workflows.
-
-## Integration Timeline
-
-- **Phase 1**: 15 minutes (essential hooks)
-- **Phase 2**: 10 minutes (first skill)
-- **Phase 3**: 5 minutes (testing)
-- **Phase 4**: As needed (advanced features)
-
-## Support & Contributions
-
-This is a living reference library. Patterns evolve as Claude Code capabilities expand.
-
-**Feedback**: Open issues for pattern improvements or Python-specific edge cases
-
-**Contributions**: PRs welcome for new skills, agents, or hooks
-
-## License
-
-MIT - Use freely in your projects
+1. **Generator system** — Python scripts that install Claude Code infrastructure (skills, agents, hooks, commands) into any target FastAPI project
+2. **Personal config store** — `.claude/` mirrors `~/.claude/`, version-controlled and installable on any machine
 
 ---
 
-**Ready to integrate?** Start with `CLAUDE_INTEGRATION_GUIDE.md` for step-by-step AI-assisted setup.
+## Repo Structure
+
+```
+claude-code-python-showcase/
+│
+├── .claude/                    ← Personal config (mirrors ~/.claude/)
+│   ├── agents/                 22 agents (planner, code-reviewer, tdd-guide, etc.)
+│   ├── commands/               2 slash commands (pr, dev-docs)
+│   ├── skills/                 42 skills (python-patterns, postgres, docker, etc.)
+│   ├── hooks/                  4 hook scripts (block-dangerous-bash, protect-files, etc.)
+│   ├── scripts/                pg-mcp.sh (PostgreSQL MCP bridge)
+│   ├── rules/common/           8 global coding rules
+│   ├── mcp/                    MCP server configs + hooks config
+│   ├── settings.json           Project Claude settings
+│   └── install.sh              ← Install personal config to ~/.claude/
+│
+├── setup_target_project.py     ← Install infrastructure into a target project
+├── compile_rules.py            ← Compile skill-rules.json → CLAUDE.md
+├── agents_generator.py         Agent template definitions
+├── commands_generator.py       Command template definitions
+├── hooks_generator.py          Hook script templates
+├── skills_generator.py         Skill directory + rules generator
+├── skills_content.py           AI/ML skill content (PyTorch, HuggingFace)
+├── examples_generator.py       Example implementation templates
+├── update_component.sh         Update components in an existing installation
+└── dev/active/                 Active feature context (CONTEXT.md, TASK.md, PLAN.md)
+```
+
+---
+
+## Use Case 1: Install Personal Config on a New Machine
+
+```bash
+git clone <repo>
+./.claude/install.sh --all          # install everything to ~/.claude/
+./.claude/install.sh --mcp          # show MCP + hooks wiring instructions
+```
+
+Individual components:
+```bash
+./.claude/install.sh --agents
+./.claude/install.sh --skills
+./.claude/install.sh --hooks
+./.claude/install.sh --rules
+```
+
+Sync local changes back to the repo:
+```bash
+./.claude/install.sh --sync         # copies ~/.claude/ → repo .claude/
+git diff .claude/                   # review
+git add .claude/ && git commit
+```
+
+---
+
+## Use Case 2: Install Infrastructure Into a Target Project
+
+```bash
+python setup_target_project.py --target /path/to/your/project --all
+```
+
+This installs into the target project's `.claude/`:
+
+| Component | What gets installed |
+|-----------|-------------------|
+| **Skills** | webhook-security, api-security, resilience-patterns, async-kafka, pytorch-patterns, huggingface-models, model-optimization |
+| **Agents** | orchestrator, webhook-validator, kafka-optimizer, security-auditor, async-converter, ai-engineer |
+| **Commands** | /check-prod-readiness, /kafka-health, /webhook-test, /security-scan, /migrate-pydantic-v2 |
+| **Hooks** | pre-commit (ruff/mypy/bandit), complexity-detector, session-start (skill routing), dependency-checker |
+
+Then compile skill routing rules into `CLAUDE.md`:
+```bash
+python compile_rules.py --target /path/to/your/project
+```
+
+Or install individual components:
+```bash
+python setup_target_project.py --target /path/to/project --component skills
+python setup_target_project.py --target /path/to/project --component agents
+```
+
+---
+
+## The 3-Layer Skill Routing Architecture
+
+The core innovation: skills activate automatically based on intent, not manual invocation.
+
+```
+Layer 1 — CLAUDE.md (native, always loaded)
+  compile_rules.py reads skill-rules.json and writes routing instructions
+  into CLAUDE.md. Claude reads this natively every session.
+
+Layer 2 — SessionStart hook (injected at session start)
+  session-start.py prints the active routing table + project context
+  (CONTEXT.md, TASK.md) into every session automatically.
+
+Layer 3 — Orchestrator agent (explicit routing)
+  Reads intent → matches routing table → loads skill SKILL.md →
+  dispatches to specialist agent via Task tool.
+```
+
+**Routing table** (from `skill-rules.json`):
+
+| Intent keywords | Skill loaded | Agent invoked |
+|----------------|-------------|---------------|
+| webhook, signature, hmac | `webhook-security` | `webhook-validator` |
+| auth, jwt, api key, rate limit | `api-security` | `security-auditor` |
+| kafka, consumer, producer, dlq | `async-kafka` + `resilience-patterns` | `kafka-optimizer` |
+| circuit breaker, retry, backoff | `resilience-patterns` | `kafka-optimizer` |
+| pytorch, training, gpu, cuda | `pytorch-patterns` | `ai-engineer` |
+| huggingface, transformers | `huggingface-models` | `ai-engineer` |
+
+---
+
+## Personal Config: What's Included
+
+### Agents (22)
+General-purpose: `planner`, `architect`, `code-reviewer`, `security-reviewer`, `tdd-guide`, `refactor-cleaner`, `doc-updater`, `e2e-runner`, `build-error-resolver`
+
+Language-specific: `python-reviewer`, `python-pro`, `go-reviewer`, `go-build-resolver`
+
+Domain-specific: `api-designer`, `backend-developer`, `database-reviewer`, `database-optimizer`, `qa-expert`
+
+### Skills (42)
+Python: `python-patterns` (sickn33 2025), `async-python-patterns`, `python-testing-patterns`, `python-testing`
+
+Infrastructure: `postgres-patterns`, `docker-patterns`, `deployment-patterns`, `database-migrations`
+
+AI/Web search: `perplexity-deep-search` (ericsantos bash impl)
+
+And more: `api-design`, `backend-patterns`, `security-review`, `tdd-workflow`, `frontend-patterns`, `design-doc-mermaid`, `cost-aware-llm-pipeline`, ...
+
+### Hooks (4 active)
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `block-dangerous-bash.sh` | `PreToolUse (Bash)` | Blocks `rm -rf /`, `curl\|bash` |
+| `protect-files.sh` | `PreToolUse (Edit/Write)` | Blocks `.env`, `*.pem` edits |
+| `session-context.sh` | `SessionStart` | Re-injects project context |
+| `validate-sql.py` | `PreToolUse (MCP postgres)` | Validates SQL before execution |
+
+### MCP Servers
+| Name | Purpose |
+|------|---------|
+| `cmem` | Session memory + lesson tracking |
+| `atlassian` | Jira + Confluence (SSE) |
+| `mermaid` | Mermaid diagram live preview |
+| `postgres-customer` | Customer DB read-only access |
+| `postgres-processing` | Processing DB read-only access |
+
+### Rules (8)
+`coding-style`, `git-workflow`, `testing`, `security`, `performance`, `patterns`, `agents`, `hooks`
+
+---
+
+## Key Design Principles
+
+**Skills as knowledge libraries** — SKILL.md files contain patterns, checklists, and code templates. They don't execute; agents load and apply them.
+
+**Agents as domain experts** — Each agent has explicit activation patterns and a mandatory first step: load its domain skill before any analysis.
+
+**Generator = source of truth** — Infrastructure is generated from Python templates. Edit the generators, regenerate; don't edit generated files directly.
+
+**500-line rule** — SKILL.md stays under 500 lines. Detailed content lives in `resources/*.md`, loaded on demand to avoid context explosion.
+
+---
+
+## License
+
+MIT

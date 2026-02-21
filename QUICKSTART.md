@@ -1,115 +1,73 @@
-# Quick Start Guide
+# Quick Start
 
-Get up and running with Claude Code FastAPI infrastructure in 5 minutes.
-
-## Prerequisites
-
-- Python 3.8+
-- FastAPI project (or starting a new one)
-- pip or poetry
-- Claude Code installed
-
-## Installation
-
-### 1. Copy to Your Project
+## Use Case 1: Restore personal config on a new machine
 
 ```bash
-# Navigate to your Python project
-cd /path/to/your-project
+git clone <repo>
+cd claude-code-python-showcase
 
-# Copy the .claude directory
-cp -r /path/to/claude-code-python-showcase/.claude .
+# Install everything to ~/.claude/
+./.claude/install.sh --all
 
-# Make hooks executable (Unix/Mac)
-chmod +x .claude/hooks/*.py
+# Then follow MCP wiring instructions
+./.claude/install.sh --mcp
 ```
 
-### 2. Install Dependencies
+Individual components:
+```bash
+./.claude/install.sh --agents
+./.claude/install.sh --skills
+./.claude/install.sh --hooks
+./.claude/install.sh --rules
+```
+
+Keep local changes synced back to the repo:
+```bash
+./.claude/install.sh --sync    # copies ~/.claude/ → repo .claude/
+git add .claude/ && git commit
+```
+
+---
+
+## Use Case 2: Install infrastructure into a target project
 
 ```bash
-# Option A: Using pip
-pip install -r .claude/hooks/requirements.txt
+# Install all components (skills, agents, commands, hooks, orchestrator)
+python setup_target_project.py --target /path/to/your-project --all
 
-# Option B: Using poetry
-poetry add --group dev mypy ruff
+# Compile skill routing rules into CLAUDE.md
+python compile_rules.py --target /path/to/your-project
 ```
 
-### 3. Verify Installation
-
+Individual components:
 ```bash
-# Test the skill activation hook
-echo '{"prompt": "I want to add a new FastAPI endpoint", "projectRoot": "."}' | \
-  python .claude/hooks/skill-activation-prompt.py
+python setup_target_project.py --target /path/to/project --component skills
+python setup_target_project.py --target /path/to/project --component agents
+python setup_target_project.py --target /path/to/project --component hooks
 ```
 
-Expected output:
+---
+
+## Common operations
+
+| Task | Command |
+|------|---------|
+| Dry-run install (preview) | `python setup_target_project.py --target /path --all --dry-run` |
+| Update single component | `./update_component.sh hooks /path/to/project` |
+| Preview CLAUDE.md output | `python compile_rules.py --target /path --dry-run` |
+| Reinstall personal hooks | `./.claude/install.sh --hooks` |
+
+---
+
+## How skill routing works
+
+After install, skills activate automatically via 3 layers:
+
+1. **CLAUDE.md** — routing table compiled from `skill-rules.json`, loaded every session natively
+2. **SessionStart hook** — re-injects routing table + `dev/active/` context at session start
+3. **Orchestrator agent** — reads intent, loads the matching skill, dispatches to specialist agent
+
+To customize routing for your project, edit `.claude/skills/skill-rules.json` then recompile:
+```bash
+python compile_rules.py --target /path/to/your-project
 ```
-💡 Relevant Skills Detected
-
-💡 The /backend-dev-guidelines skill provides Python backend patterns...
-```
-
-## First Use
-
-### 1. Start Claude Code
-
-Open your project in Claude Code.
-
-### 2. Trigger a Skill
-
-Type in Claude Code:
-```
-I want to add a new API endpoint
-```
-
-You should see a skill suggestion appear automatically!
-
-### 3. Use the Skill
-
-Click or type:
-```
-/backend-dev-guidelines
-```
-
-The skill will load with patterns and best practices.
-
-## Next Steps
-
-✅ **Customize for your project**: Edit `.claude/skills/skill-rules.json` to match your domain and conventions
-
-✅ **Add more skills**: Copy additional skills from the showcase
-
-✅ **Create project-specific skills**: Use `/skill-developer` to create custom skills for your team
-
-✅ **Read the full guide**: See `CLAUDE_INTEGRATION_GUIDE.md` for detailed integration instructions
-
-## Common Issues
-
-**Hook not running?**
-- Check Python path: `which python3`
-- Verify settings.json syntax
-- Make hooks executable: `chmod +x .claude/hooks/*.py`
-
-**Skills not suggested?**
-- Verify skill-rules.json is valid JSON
-- Check keywords match your prompts (case-insensitive)
-- Ensure file paths match your project structure
-
-**Import errors?**
-- Install dependencies: `pip install -r .claude/hooks/requirements.txt`
-
-## Need Help?
-
-- Read the [full README](README.md)
-- Check the [integration guide](CLAUDE_INTEGRATION_GUIDE.md)
-- Review example [dev docs](dev/active/example-feature/)
-
-## What's Next?
-
-After basic setup:
-1. Customize skill rules for your project
-2. Add agents for specialized tasks
-3. Create slash commands for common workflows
-4. Share with your team
-
-Happy coding with Claude! 🚀

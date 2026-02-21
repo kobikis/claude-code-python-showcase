@@ -74,7 +74,6 @@ def main():
 if __name__ == "__main__":
     sys.exit(main())
 ''',
-
     "complexity-detector": '''#!/usr/bin/env python3
 """
 Complexity Detector Hook
@@ -191,7 +190,106 @@ def main():
 if __name__ == "__main__":
     sys.exit(main())
 ''',
+    "session-start": '''#!/usr/bin/env python3
+"""
+Session Start Hook
 
+Reads skill-rules.json and injects active routing rules into session context.
+Registered under SessionStart in settings.json.
+"""
+
+import json
+import sys
+from pathlib import Path
+
+
+def load_rules(claude_dir: Path) -> dict:
+    rules_file = claude_dir / "skills" / "skill-rules.json"
+    if not rules_file.exists():
+        return {}
+    with open(rules_file) as f:
+        return json.load(f)
+
+
+def load_active_context(dev_dir: Path) -> dict:
+    context = {}
+    for name in ("CONTEXT.md", "TASK.md", "PLAN.md"):
+        f = dev_dir / "active" / name
+        if f.exists():
+            context[name] = f.read_text()[:500]  # first 500 chars only
+    return context
+
+
+def print_routing_table(rules: dict):
+    skills = rules.get("skills", [])
+    if not skills:
+        return
+
+    print("## Active Skill Routes\\n")
+    print("Claude will automatically load these skills based on task intent:\\n")
+
+    agent_map = {
+        "webhook-security":    "webhook-validator",
+        "api-security":        "security-auditor",
+        "resilience-patterns": "kafka-optimizer",
+        "async-kafka":         "kafka-optimizer",
+        "pytorch-patterns":    "ai-engineer",
+        "huggingface-models":  "ai-engineer",
+        "model-optimization":  "ai-engineer",
+    }
+
+    for skill in skills:
+        name = skill["name"]
+        keywords = ", ".join(skill.get("keywords", [])[:3])
+        agent = agent_map.get(name, "—")
+        print(f"- **{name}** | keywords: {keywords} | agent: {agent}")
+
+    print()
+
+
+def print_active_context(context: dict):
+    if not context:
+        return
+
+    print("## Active Project Context\\n")
+    for filename, content in context.items():
+        print(f"### {filename}")
+        print(content.strip())
+        if len(content) >= 500:
+            print("... (truncated)")
+        print()
+
+
+def main():
+    # Locate .claude dir: check CWD and parent
+    cwd = Path.cwd()
+    claude_dir = None
+    for candidate in (cwd / ".claude", cwd.parent / ".claude"):
+        if candidate.exists():
+            claude_dir = candidate
+            break
+
+    if not claude_dir:
+        return 0
+
+    rules = load_rules(claude_dir)
+    dev_dir = claude_dir.parent / "dev"
+    context = load_active_context(dev_dir)
+
+    print_routing_table(rules)
+    print_active_context(context)
+
+    if rules or context:
+        print("---")
+        print("Orchestrator: Use `Task` tool with `orchestrator` agent for complex tasks.")
+        print()
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+''',
     "dependency-checker": '''#!/usr/bin/env python3
 """
 Dependency Checker Hook
@@ -355,7 +453,7 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-'''
+''',
 }
 
 
@@ -379,10 +477,10 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-'''
+''',
     )
 
-    with open(hook_file, 'w') as f:
+    with open(hook_file, "w") as f:
         f.write(content)
 
     # Make executable

@@ -11,40 +11,45 @@ Usage:
     python setup_target_project.py --target /path/to/your/project --all
 """
 
-import os
 import sys
 import json
 import shutil
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Optional
+
 
 # Color codes for terminal output
 class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKCYAN = "\033[96m"
+    OKGREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
 
 def print_header(message: str):
     print(f"\n{Colors.HEADER}{Colors.BOLD}{'='*80}{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}{message.center(80)}{Colors.ENDC}")
     print(f"{Colors.HEADER}{Colors.BOLD}{'='*80}{Colors.ENDC}\n")
 
+
 def print_success(message: str):
     print(f"{Colors.OKGREEN}✓{Colors.ENDC} {message}")
+
 
 def print_warning(message: str):
     print(f"{Colors.WARNING}⚠{Colors.ENDC} {message}")
 
+
 def print_error(message: str):
     print(f"{Colors.FAIL}✗{Colors.ENDC} {message}")
+
 
 def print_info(message: str):
     print(f"{Colors.OKCYAN}ℹ{Colors.ENDC} {message}")
@@ -55,8 +60,12 @@ class ProjectSetup:
 
     def __init__(self, target_path: str, source_path: Optional[str] = None):
         self.target = Path(target_path).resolve()
-        self.source = Path(source_path).resolve() if source_path else Path(__file__).parent
-        self.backup_dir = self.target / ".claude_backup" / datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.source = (
+            Path(source_path).resolve() if source_path else Path(__file__).parent
+        )
+        self.backup_dir = (
+            self.target / ".claude_backup" / datetime.now().strftime("%Y%m%d_%H%M%S")
+        )
 
         # Validate paths
         if not self.target.exists():
@@ -102,7 +111,7 @@ class ProjectSetup:
             "event-driven-patterns",
             "pytorch-patterns",
             "huggingface-models",
-            "model-optimization"
+            "model-optimization",
         ]
 
         skills_dir = self.claude_dir / "skills"
@@ -129,7 +138,7 @@ class ProjectSetup:
             "kafka-optimizer",
             "security-auditor",
             "async-converter",
-            "ai-engineer"
+            "ai-engineer",
         ]
 
         for agent_name in agents:
@@ -151,7 +160,7 @@ class ProjectSetup:
             "kafka-health",
             "webhook-test",
             "security-scan",
-            "migrate-pydantic-v2"
+            "migrate-pydantic-v2",
         ]
 
         for command_name in commands:
@@ -168,11 +177,7 @@ class ProjectSetup:
         hooks_dir = self.claude_dir / "hooks"
         hooks_dir.mkdir(exist_ok=True)
 
-        hooks = [
-            "pre-commit",
-            "complexity-detector",
-            "dependency-checker"
-        ]
+        hooks = ["pre-commit", "complexity-detector", "dependency-checker"]
 
         for hook_name in hooks:
             print_info(f"Creating hook: {hook_name}")
@@ -193,7 +198,7 @@ class ProjectSetup:
             "idempotency",
             "webhook_verifier",
             "async_kafka",
-            "base_service"
+            "base_service",
         ]
 
         for example_name in examples:
@@ -241,8 +246,8 @@ class ProjectSetup:
             "safety>=2.3.0",
         ]
 
-        with open(req_file, 'a') as f:
-            f.write('\n'.join(new_deps))
+        with open(req_file, "a") as f:
+            f.write("\n".join(new_deps))
 
         print_success("Dependencies updated in requirements.txt")
         print_warning("Run: pip install -r requirements.txt")
@@ -250,6 +255,7 @@ class ProjectSetup:
     def _create_skill(self, skill_name: str):
         """Create a skill directory and files"""
         from skills_generator import create_skill
+
         skill_dir = self.claude_dir / "skills" / skill_name
         skill_dir.mkdir(parents=True, exist_ok=True)
         create_skill(skill_name, skill_dir)
@@ -257,32 +263,113 @@ class ProjectSetup:
     def _create_agent(self, agent_name: str):
         """Create an agent file"""
         from agents_generator import create_agent
+
         agent_file = self.claude_dir / "agents" / f"{agent_name}.md"
         create_agent(agent_name, agent_file)
 
     def _create_command(self, command_name: str):
         """Create a slash command file"""
         from commands_generator import create_command
+
         command_file = self.claude_dir / "commands" / f"{command_name}.md"
         create_command(command_name, command_file)
 
     def _create_hook(self, hook_name: str):
         """Create a hook file"""
         from hooks_generator import create_hook
+
         hook_file = self.claude_dir / "hooks" / f"{hook_name}.py"
         create_hook(hook_name, hook_file)
 
     def _create_example(self, example_name: str):
         """Create an example implementation"""
         from examples_generator import create_example
-        example_file = self.target / "examples" / "claude_patterns" / f"{example_name}.py"
+
+        example_file = (
+            self.target / "examples" / "claude_patterns" / f"{example_name}.py"
+        )
         create_example(example_name, example_file)
 
     def _update_skill_rules(self, skill_names: List[str]):
         """Update skill-rules.json with new skills"""
         from skills_generator import generate_skill_rules
+
         rules_file = self.claude_dir / "skills" / "skill-rules.json"
         generate_skill_rules(skill_names, rules_file)
+
+    def compile_rules_to_claude_md(self):
+        """Compile skill-rules.json into CLAUDE.md routing instructions"""
+        print_header("Compiling Skill Routes → CLAUDE.md")
+
+        rules_file = self.claude_dir / "skills" / "skill-rules.json"
+        if not rules_file.exists():
+            print_warning("skill-rules.json not found — run setup_skills() first")
+            return
+
+        from compile_rules import load_rules, compile_to_claude_md
+
+        rules = load_rules(rules_file)
+        claude_md_file = self.target / "CLAUDE.md"
+        compile_to_claude_md(rules, claude_md_file)
+        print_success(f"Skill routing rules compiled into: {claude_md_file}")
+
+    def setup_orchestrator(self):
+        """Install the orchestrator agent"""
+        print_header("Installing Orchestrator Agent")
+
+        agents_dir = self.claude_dir / "agents"
+        agents_dir.mkdir(exist_ok=True)
+
+        self._create_agent("orchestrator")
+        print_success("Orchestrator agent installed: .claude/agents/orchestrator.md")
+
+    def install_session_hook(self, settings_file: Optional[Path] = None):
+        """Install session-start hook and register it in settings.json"""
+        print_header("Installing Session Start Hook")
+
+        # Write the hook script
+        hooks_dir = self.claude_dir / "hooks"
+        hooks_dir.mkdir(exist_ok=True)
+        self._create_hook("session-start")
+        hook_path = hooks_dir / "session-start.py"
+        print_success(f"Session hook created: {hook_path}")
+
+        # Register in .claude/settings.json (project-level)
+        settings_path = settings_file or (self.claude_dir / "settings.json")
+        settings = {}
+        if settings_path.exists():
+            with open(settings_path) as f:
+                settings = json.load(f)
+
+        hooks = settings.setdefault("hooks", {})
+        session_hooks = hooks.setdefault("SessionStart", [])
+
+        hook_entry = {
+            "matcher": "",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"python3 {hook_path}",
+                    "description": "Inject skill routing rules and project context at session start",
+                }
+            ],
+        }
+
+        # Avoid duplicate registration
+        already_registered = any(
+            any(
+                h.get("command", "").endswith("session-start.py")
+                for h in entry.get("hooks", [])
+            )
+            for entry in session_hooks
+        )
+        if not already_registered:
+            session_hooks.append(hook_entry)
+            with open(settings_path, "w") as f:
+                json.dump(settings, f, indent=2)
+            print_success(f"Session hook registered in: {settings_path}")
+        else:
+            print_info("Session hook already registered — skipping")
 
     def create_readme(self):
         """Create README for Claude Code setup"""
@@ -346,7 +433,7 @@ Original files backed up in `.claude_backup/`
 - Agents are markdown files with specialized instructions
 """
 
-        with open(readme_path, 'w') as f:
+        with open(readme_path, "w") as f:
             f.write(readme_content)
 
         print_success(f"README created at: {readme_path}")
@@ -365,10 +452,14 @@ def interactive_menu(setup: ProjectSetup):
     print("  4. Hooks (pre-commit, complexity-detector, etc.)")
     print("  5. Example Implementations")
     print("  6. Update Dependencies")
-    print("  7. All of the above")
+    print("  7. All of the above (recommended)")
+    print("  ---")
+    print("  8. Orchestrator Agent only")
+    print("  9. Session Start Hook only")
+    print("  10. Compile Rules → CLAUDE.md only")
     print("  0. Exit")
 
-    choice = input("\nEnter your choice (0-7): ").strip()
+    choice = input("\nEnter your choice (0-10): ").strip()
 
     if choice == "0":
         print_info("Setup cancelled")
@@ -380,11 +471,20 @@ def interactive_menu(setup: ProjectSetup):
     if choice == "2" or choice == "7":
         setup.setup_agents()
 
+    if choice in ("7", "8"):
+        setup.setup_orchestrator()
+
     if choice == "3" or choice == "7":
         setup.setup_commands()
 
     if choice == "4" or choice == "7":
         setup.setup_hooks()
+
+    if choice in ("7", "9"):
+        setup.install_session_hook()
+
+    if choice in ("7", "10"):
+        setup.compile_rules_to_claude_md()
 
     if choice == "5" or choice == "7":
         setup.setup_examples()
@@ -402,35 +502,23 @@ def interactive_menu(setup: ProjectSetup):
     print("  1. pip install -r requirements.txt")
     print("  2. Review .claude/README.md")
     print("  3. Test with: 'I need to add webhook signature verification'")
+    print("  4. Or just start Claude — the orchestrator will route automatically")
 
 
 def main():
     parser = argparse.ArgumentParser(
         description="Setup Claude Code infrastructure for FastAPI projects"
     )
-    parser.add_argument(
-        "--target",
-        required=True,
-        help="Target project path"
-    )
-    parser.add_argument(
-        "--source",
-        help="Source path (defaults to script directory)"
-    )
+    parser.add_argument("--target", required=True, help="Target project path")
+    parser.add_argument("--source", help="Source path (defaults to script directory)")
     parser.add_argument(
         "--component",
         choices=["skills", "agents", "commands", "hooks", "examples", "deps"],
-        help="Install specific component"
+        help="Install specific component",
     )
+    parser.add_argument("--all", action="store_true", help="Install all components")
     parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Install all components"
-    )
-    parser.add_argument(
-        "--non-interactive",
-        action="store_true",
-        help="Run without prompts"
+        "--non-interactive", action="store_true", help="Run without prompts"
     )
 
     args = parser.parse_args()
@@ -442,8 +530,11 @@ def main():
             if args.all:
                 setup.setup_skills()
                 setup.setup_agents()
+                setup.setup_orchestrator()
                 setup.setup_commands()
                 setup.setup_hooks()
+                setup.install_session_hook()
+                setup.compile_rules_to_claude_md()
                 setup.setup_examples()
                 setup.update_dependencies()
                 setup.create_readme()
@@ -468,6 +559,7 @@ def main():
     except Exception as e:
         print_error(f"Setup failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 
