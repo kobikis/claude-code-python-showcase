@@ -177,6 +177,14 @@ And more: `api-design`, `backend-patterns`, `security-review`, `tdd-workflow`, `
 
 ---
 
+## Docs
+
+| Doc | Contents |
+|-----|----------|
+| [docs/workflow.md](docs/workflow.md) | PRD to implementation — who does what, why it's not fully autonomous, how to increase autonomy |
+
+---
+
 ## License
 
 MIT
