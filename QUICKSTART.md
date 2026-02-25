@@ -32,7 +32,7 @@ git add .claude/ && git commit
 ## Use Case 2: Install infrastructure into a target project
 
 ```bash
-# Install all components (skills, agents, commands, hooks, orchestrator)
+# Install all components (skills, agents, commands, hooks, rules)
 python setup_target_project.py --target /path/to/your-project --all
 
 # Compile skill routing rules into CLAUDE.md
@@ -43,7 +43,9 @@ Individual components:
 ```bash
 python setup_target_project.py --target /path/to/project --component skills
 python setup_target_project.py --target /path/to/project --component agents
+python setup_target_project.py --target /path/to/project --component rules
 python setup_target_project.py --target /path/to/project --component hooks
+python setup_target_project.py --target /path/to/project --component commands
 ```
 
 ---
@@ -52,8 +54,8 @@ python setup_target_project.py --target /path/to/project --component hooks
 
 | Task | Command |
 |------|---------|
-| Dry-run install (preview) | `python setup_target_project.py --target /path --all --dry-run` |
-| Update single component | `./update_component.sh hooks /path/to/project` |
+| Install all (non-interactive) | `python setup_target_project.py --target /path --all --non-interactive` |
+| Update single component | `./update_component.sh /path/to/project skills` |
 | Preview CLAUDE.md output | `python compile_rules.py --target /path --dry-run` |
 | Reinstall personal hooks | `./.claude/install.sh --hooks` |
 
@@ -79,7 +81,7 @@ After install, skills activate automatically via 3 layers:
 
 1. **CLAUDE.md** — routing table compiled from `skill-rules.json`, loaded every session natively
 2. **SessionStart hook** — re-injects routing table + `dev/active/` context at session start
-3. **Orchestrator agent** — reads intent, loads the matching skill, dispatches to specialist agent
+3. **`/orchestrate` command** — chains agents in a pipeline, loading relevant skills at each step
 
 To customize routing for your project, edit `.claude/skills/skill-rules.json` then recompile:
 ```bash

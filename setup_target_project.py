@@ -2,13 +2,15 @@
 """
 Claude Code Infrastructure Setup Script
 
-Applies production-ready Claude Code infrastructure to your FastAPI project.
-This script creates skills, agents, hooks, and example implementations.
+Copies production-ready Claude Code infrastructure from .claude/ source into
+your Python/FastAPI project. All content is copied from source files — no
+inline templates.
 
 Usage:
     python setup_target_project.py --target /path/to/your/project
     python setup_target_project.py --target /path/to/your/project --component skills
     python setup_target_project.py --target /path/to/your/project --all
+    python setup_target_project.py --target /path/to/your/project --all --non-interactive
 """
 
 import sys
@@ -17,7 +19,14 @@ import shutil
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
+
+from agents_generator import copy_all_agents
+from commands_generator import copy_all_commands
+from compile_rules import load_rules, compile_to_claude_md
+from examples_generator import EXAMPLE_TEMPLATES, create_example
+from hooks_generator import copy_all_hooks_and_scripts
+from skills_generator import SKILL_NAMES, copy_all_skills, generate_skill_rules
 
 
 # Color codes for terminal output
@@ -30,7 +39,6 @@ class Colors:
     FAIL = "\033[91m"
     ENDC = "\033[0m"
     BOLD = "\033[1m"
-    UNDERLINE = "\033[4m"
 
 
 def print_header(message: str):
@@ -56,7 +64,7 @@ def print_info(message: str):
 
 
 class ProjectSetup:
-    """Main setup orchestrator"""
+    """Main setup orchestrator — copies from .claude/ source of truth."""
 
     def __init__(self, target_path: str, source_path: Optional[str] = None):
         self.target = Path(target_path).resolve()
@@ -67,7 +75,6 @@ class ProjectSetup:
             self.target / ".claude_backup" / datetime.now().strftime("%Y%m%d_%H%M%S")
         )
 
-        # Validate paths
         if not self.target.exists():
             raise ValueError(f"Target project not found: {self.target}")
         if not self.source.exists():
@@ -76,8 +83,8 @@ class ProjectSetup:
         self.claude_dir = self.target / ".claude"
         self.claude_dir.mkdir(exist_ok=True)
 
-    def create_backup(self, paths: List[Path]):
-        """Create backup of existing files"""
+    def create_backup(self, paths: list[Path]):
+        """Create backup of existing files."""
         if not paths:
             return
 
@@ -98,118 +105,110 @@ class ProjectSetup:
 
         print_success(f"Backup created at: {self.backup_dir}")
 
-    def setup_skills(self, skill_names: Optional[List[str]] = None):
-        """Install Claude Code skills"""
+    def setup_skills(self):
+        """Copy skill directories from source."""
         print_header("Installing Skills")
-
-        skills_to_install = skill_names or [
-            "webhook-security",
-            "api-security",
-            "resilience-patterns",
-            "async-kafka",
-            "pydantic-v2-migration",
-            "event-driven-patterns",
-            "pytorch-patterns",
-            "huggingface-models",
-            "model-optimization",
-        ]
 
         skills_dir = self.claude_dir / "skills"
         skills_dir.mkdir(exist_ok=True)
 
-        for skill_name in skills_to_install:
-            print_info(f"Creating skill: {skill_name}")
-            self._create_skill(skill_name)
-            print_success(f"Skill created: {skill_name}")
+        copied = copy_all_skills(skills_dir)
+        for path in copied:
+            print_success(f"Skill copied: {path.name}")
 
-        # Update skill-rules.json
-        self._update_skill_rules(skills_to_install)
+        # Generate skill-rules.json
+        rules_file = skills_dir / "skill-rules.json"
+        generate_skill_rules(SKILL_NAMES, rules_file)
+        print_success(f"skill-rules.json generated with {len(SKILL_NAMES)} entries")
+
         print_success("Skills installation complete")
 
     def setup_agents(self):
-        """Install custom agents"""
-        print_header("Installing Custom Agents")
+        """Copy agent files from source."""
+        print_header("Installing Agents")
 
         agents_dir = self.claude_dir / "agents"
-        agents_dir.mkdir(exist_ok=True)
-
-        agents = [
-            "webhook-validator",
-            "kafka-optimizer",
-            "security-auditor",
-            "async-converter",
-            "ai-engineer",
-        ]
-
-        for agent_name in agents:
-            print_info(f"Creating agent: {agent_name}")
-            self._create_agent(agent_name)
-            print_success(f"Agent created: {agent_name}")
+        copied = copy_all_agents(agents_dir)
+        for path in copied:
+            print_success(f"Agent copied: {path.name}")
 
         print_success("Agents installation complete")
 
     def setup_commands(self):
-        """Install slash commands"""
+        """Copy slash command files from source."""
         print_header("Installing Slash Commands")
 
         commands_dir = self.claude_dir / "commands"
-        commands_dir.mkdir(exist_ok=True)
-
-        commands = [
-            "check-prod-readiness",
-            "kafka-health",
-            "webhook-test",
-            "security-scan",
-            "migrate-pydantic-v2",
-        ]
-
-        for command_name in commands:
-            print_info(f"Creating command: {command_name}")
-            self._create_command(command_name)
-            print_success(f"Command created: /{command_name}")
+        copied = copy_all_commands(commands_dir)
+        for path in copied:
+            print_success(f"Command copied: /{path.stem}")
 
         print_success("Commands installation complete")
 
     def setup_hooks(self):
-        """Install additional hooks"""
-        print_header("Installing Additional Hooks")
+        """Copy hook scripts and JS hooks/libs from source."""
+        print_header("Installing Hooks & Scripts")
 
-        hooks_dir = self.claude_dir / "hooks"
-        hooks_dir.mkdir(exist_ok=True)
+        copied, skipped = copy_all_hooks_and_scripts(self.claude_dir)
+        for path in copied:
+            relative = path.relative_to(self.claude_dir)
+            print_success(f"Copied: {relative}")
 
-        hooks = ["pre-commit", "complexity-detector", "dependency-checker"]
+        for filename in skipped:
+            print_warning(f"Source not found, skipped: {filename}")
 
-        for hook_name in hooks:
-            print_info(f"Creating hook: {hook_name}")
-            self._create_hook(hook_name)
-            print_success(f"Hook created: {hook_name}.py")
+        print_success("Hooks & scripts installation complete")
 
-        print_success("Hooks installation complete")
+    def setup_rules(self):
+        """Copy rule files from source."""
+        print_header("Installing Rules")
+
+        source_rules = self.source / ".claude" / "rules"
+        if not source_rules.exists():
+            print_warning("Source rules directory not found — skipping")
+            return
+
+        target_rules = self.claude_dir / "rules"
+
+        # Copy common rules
+        common_src = source_rules / "common"
+        if common_src.exists():
+            common_dst = target_rules / "common"
+            if common_dst.exists():
+                shutil.rmtree(common_dst)
+            shutil.copytree(common_src, common_dst)
+            count = len(list(common_dst.glob("*.md")))
+            print_success(f"Common rules copied: {count} files")
+
+        # Copy python rules
+        python_src = source_rules / "python"
+        if python_src.exists():
+            python_dst = target_rules / "python"
+            if python_dst.exists():
+                shutil.rmtree(python_dst)
+            shutil.copytree(python_src, python_dst)
+            count = len(list(python_dst.glob("*.md")))
+            print_success(f"Python rules copied: {count} files")
+
+        print_success("Rules installation complete")
 
     def setup_examples(self):
-        """Create example implementations"""
+        """Create example implementations."""
         print_header("Creating Example Implementations")
 
         examples_dir = self.target / "examples" / "claude_patterns"
         examples_dir.mkdir(parents=True, exist_ok=True)
 
-        examples = [
-            "circuit_breaker",
-            "idempotency",
-            "webhook_verifier",
-            "async_kafka",
-            "base_service",
-        ]
-
-        for example_name in examples:
+        for example_name in EXAMPLE_TEMPLATES:
             print_info(f"Creating example: {example_name}")
-            self._create_example(example_name)
+            example_file = examples_dir / f"{example_name}.py"
+            create_example(example_name, example_file)
             print_success(f"Example created: {example_name}.py")
 
         print_success("Examples installation complete")
 
     def update_dependencies(self):
-        """Update requirements.txt"""
+        """Update requirements.txt with recommended packages."""
         print_header("Updating Dependencies")
 
         req_file = self.target / "requirements.txt"
@@ -219,31 +218,45 @@ class ProjectSetup:
 
         new_deps = [
             "\n# Added by Claude Code setup",
-            "# Async Kafka",
-            "aiokafka>=0.10.0",
+            "# Async HTTP",
+            "httpx>=0.27.0",
             "",
-            "# Resilience",
-            "tenacity>=8.2.0",
-            "pybreaker>=1.0.0",
+            "# Web Framework",
+            "fastapi>=0.115.0",
+            "uvicorn[standard]>=0.30.0",
             "",
-            "# Security",
-            "python-jose[cryptography]>=3.3.0",
-            "slowapi>=0.1.9",
+            "# Database",
+            "sqlalchemy[asyncio]>=2.0.0",
+            "asyncpg>=0.29.0",
+            "alembic>=1.13.0",
+            "",
+            "# Validation & Settings",
+            "pydantic>=2.5.0",
+            "pydantic-settings>=2.1.0",
             "",
             "# Observability",
             "structlog>=23.1.0",
             "",
-            "# Caching & Idempotency",
+            "# Security",
+            "python-jose[cryptography]>=3.3.0",
+            "",
+            "# Caching",
             "redis[hiredis]>=5.0.0",
             "",
             "# Testing",
-            "pytest-asyncio>=0.21.0",
+            "pytest>=8.0.0",
+            "pytest-asyncio>=0.23.0",
             "pytest-mock>=3.12.0",
+            "pytest-cov>=4.1.0",
             "faker>=20.0.0",
             "",
-            "# Security scanning",
+            "# Code Quality",
+            "ruff>=0.4.0",
+            "mypy>=1.8.0",
+            "",
+            "# Security Scanning",
             "bandit>=1.7.5",
-            "safety>=2.3.0",
+            "",
         ]
 
         with open(req_file, "a") as f:
@@ -252,53 +265,61 @@ class ProjectSetup:
         print_success("Dependencies updated in requirements.txt")
         print_warning("Run: pip install -r requirements.txt")
 
-    def _create_skill(self, skill_name: str):
-        """Create a skill directory and files"""
-        from skills_generator import create_skill
+    def install_session_hook(self):
+        """Register session-start hook in settings.json.
 
-        skill_dir = self.claude_dir / "skills" / skill_name
-        skill_dir.mkdir(parents=True, exist_ok=True)
-        create_skill(skill_name, skill_dir)
+        Builds a new settings dict immutably rather than mutating in place.
+        """
+        print_header("Registering Session Hook")
 
-    def _create_agent(self, agent_name: str):
-        """Create an agent file"""
-        from agents_generator import create_agent
+        hook_path = self.claude_dir / "scripts" / "hooks" / "session-start.js"
+        if not hook_path.exists():
+            print_warning("session-start.js not found — run setup_hooks() first")
+            return
 
-        agent_file = self.claude_dir / "agents" / f"{agent_name}.md"
-        create_agent(agent_name, agent_file)
+        settings_path = self.claude_dir / "settings.json"
+        settings: dict = {}
+        if settings_path.exists():
+            with open(settings_path) as f:
+                settings = json.load(f)
 
-    def _create_command(self, command_name: str):
-        """Create a slash command file"""
-        from commands_generator import create_command
+        existing_hooks = settings.get("hooks", {})
+        existing_session_hooks = existing_hooks.get("SessionStart", [])
 
-        command_file = self.claude_dir / "commands" / f"{command_name}.md"
-        create_command(command_name, command_file)
-
-    def _create_hook(self, hook_name: str):
-        """Create a hook file"""
-        from hooks_generator import create_hook
-
-        hook_file = self.claude_dir / "hooks" / f"{hook_name}.py"
-        create_hook(hook_name, hook_file)
-
-    def _create_example(self, example_name: str):
-        """Create an example implementation"""
-        from examples_generator import create_example
-
-        example_file = (
-            self.target / "examples" / "claude_patterns" / f"{example_name}.py"
+        already_registered = any(
+            any(
+                h.get("command", "").endswith("session-start.js")
+                for h in entry.get("hooks", [])
+            )
+            for entry in existing_session_hooks
         )
-        create_example(example_name, example_file)
 
-    def _update_skill_rules(self, skill_names: List[str]):
-        """Update skill-rules.json with new skills"""
-        from skills_generator import generate_skill_rules
+        if already_registered:
+            print_info("Session hook already registered — skipping")
+            return
 
-        rules_file = self.claude_dir / "skills" / "skill-rules.json"
-        generate_skill_rules(skill_names, rules_file)
+        hook_entry = {
+            "matcher": "",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": f"node {hook_path}",
+                    "description": "Inject skill routing rules and project context at session start",
+                }
+            ],
+        }
+
+        # Build new settings immutably
+        updated_session_hooks = [*existing_session_hooks, hook_entry]
+        updated_hooks = {**existing_hooks, "SessionStart": updated_session_hooks}
+        updated_settings = {**settings, "hooks": updated_hooks}
+
+        with open(settings_path, "w") as f:
+            json.dump(updated_settings, f, indent=2)
+        print_success(f"Session hook registered in: {settings_path}")
 
     def compile_rules_to_claude_md(self):
-        """Compile skill-rules.json into CLAUDE.md routing instructions"""
+        """Compile skill-rules.json into CLAUDE.md routing instructions."""
         print_header("Compiling Skill Routes → CLAUDE.md")
 
         rules_file = self.claude_dir / "skills" / "skill-rules.json"
@@ -306,131 +327,80 @@ class ProjectSetup:
             print_warning("skill-rules.json not found — run setup_skills() first")
             return
 
-        from compile_rules import load_rules, compile_to_claude_md
-
         rules = load_rules(rules_file)
         claude_md_file = self.target / "CLAUDE.md"
         compile_to_claude_md(rules, claude_md_file)
         print_success(f"Skill routing rules compiled into: {claude_md_file}")
 
-    def setup_orchestrator(self):
-        """Install the orchestrator agent"""
-        print_header("Installing Orchestrator Agent")
-
-        agents_dir = self.claude_dir / "agents"
-        agents_dir.mkdir(exist_ok=True)
-
-        self._create_agent("orchestrator")
-        print_success("Orchestrator agent installed: .claude/agents/orchestrator.md")
-
-    def install_session_hook(self, settings_file: Optional[Path] = None):
-        """Install session-start hook and register it in settings.json"""
-        print_header("Installing Session Start Hook")
-
-        # Write the hook script
-        hooks_dir = self.claude_dir / "hooks"
-        hooks_dir.mkdir(exist_ok=True)
-        self._create_hook("session-start")
-        hook_path = hooks_dir / "session-start.py"
-        print_success(f"Session hook created: {hook_path}")
-
-        # Register in .claude/settings.json (project-level)
-        settings_path = settings_file or (self.claude_dir / "settings.json")
-        settings = {}
-        if settings_path.exists():
-            with open(settings_path) as f:
-                settings = json.load(f)
-
-        hooks = settings.setdefault("hooks", {})
-        session_hooks = hooks.setdefault("SessionStart", [])
-
-        hook_entry = {
-            "matcher": "",
-            "hooks": [
-                {
-                    "type": "command",
-                    "command": f"python3 {hook_path}",
-                    "description": "Inject skill routing rules and project context at session start",
-                }
-            ],
-        }
-
-        # Avoid duplicate registration
-        already_registered = any(
-            any(
-                h.get("command", "").endswith("session-start.py")
-                for h in entry.get("hooks", [])
-            )
-            for entry in session_hooks
-        )
-        if not already_registered:
-            session_hooks.append(hook_entry)
-            with open(settings_path, "w") as f:
-                json.dump(settings, f, indent=2)
-            print_success(f"Session hook registered in: {settings_path}")
-        else:
-            print_info("Session hook already registered — skipping")
-
     def create_readme(self):
-        """Create README for Claude Code setup"""
+        """Create README for Claude Code setup."""
         readme_path = self.claude_dir / "README.md"
 
         readme_content = f"""# Claude Code Infrastructure
 
-This directory contains Claude Code infrastructure for your project.
+This directory contains Claude Code infrastructure copied from the
+claude-code-python-showcase source of truth.
 
 ## Installation Date
 {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Components Installed
 
-### Skills
-Custom skills for FastAPI, webhooks, and microservices patterns.
+### Skills (12)
+Pattern libraries copied from source `.claude/skills/`:
+python-patterns, async-python-patterns, python-testing, tdd-workflow,
+postgres-patterns, docker-patterns, deployment-patterns, security-review,
+design-doc-mermaid, perplexity-deep-search, verification-loop, strategic-compact
 
-### Agents
-Specialized agents for security, optimization, and validation.
+### Agents (10)
+Specialist agents copied from source `.claude/agents/`:
+planner, architect, tdd-guide, code-reviewer, security-reviewer,
+fastapi-specialist, aws-specialist, k8s-specialist, python-database-expert,
+python-debugger
 
-### Commands
-Slash commands for common operations.
+### Commands (9)
+Slash commands copied from source `.claude/commands/`:
+/pr, /plan, /tdd, /code-review, /build-fix, /test-coverage, /verify,
+/update-docs, /orchestrate
 
-### Hooks
-Automated hooks for quality assurance and validation.
+### Hooks & Scripts
+- Shell/Python hooks in `.claude/hooks/`
+- JS hook scripts in `.claude/scripts/hooks/`
+- JS library modules in `.claude/scripts/lib/`
+
+### Rules (13)
+- 8 common rules in `.claude/rules/common/`
+- 5 Python-specific rules in `.claude/rules/python/`
 
 ## Usage
 
 ### Activating Skills
-Skills activate automatically based on your prompts and files you're editing.
+Skills activate automatically based on intent patterns and file paths.
 
 ### Running Commands
-- `/check-prod-readiness` - Check production readiness
-- `/kafka-health` - Check Kafka health
-- `/webhook-test` - Generate webhook tests
-- `/security-scan` - Run security scans
+- `/orchestrate` - Multi-agent workflow orchestration
+- `/plan` - Create implementation plan
+- `/tdd` - Test-driven development workflow
+- `/code-review` - Code quality review
+- `/pr` - Create pull request with summary
+- `/verify` - Run verification checks
+- `/test-coverage` - Analyze test coverage
+- `/build-fix` - Troubleshoot build failures
+- `/update-docs` - Update documentation
 
 ### Using Agents
-Agents are invoked automatically by Claude based on context.
+Agents are invoked via the Task tool based on routing rules in CLAUDE.md.
 
-## Examples
+## Updating
 
-Example implementations are available in `examples/claude_patterns/`
+To update components from the showcase:
+```bash
+./update_component.sh /path/to/this/project [skills|agents|commands|hooks|rules|all]
+```
 
 ## Backup
 
 Original files backed up in `.claude_backup/`
-
-## Next Steps
-
-1. Review the skills in `.claude/skills/`
-2. Install dependencies: `pip install -r requirements.txt`
-3. Test with: "I need to add webhook signature verification"
-4. Review examples in `examples/claude_patterns/`
-
-## Documentation
-
-- Skills follow the 500-line rule (main SKILL.md + resources/)
-- Hooks are Python scripts executed on events
-- Commands are markdown files with prompts
-- Agents are markdown files with specialized instructions
 """
 
         with open(readme_path, "w") as f:
@@ -440,21 +410,21 @@ Original files backed up in `.claude_backup/`
 
 
 def interactive_menu(setup: ProjectSetup):
-    """Interactive installation menu"""
+    """Interactive installation menu."""
     print_header("Claude Code Infrastructure Setup")
     print(f"Target Project: {setup.target}")
     print(f"Source: {setup.source}\n")
 
     print("Select components to install:")
-    print("  1. Skills (webhook-security, api-security, etc.)")
-    print("  2. Agents (webhook-validator, security-auditor, etc.)")
-    print("  3. Slash Commands (/check-prod-readiness, etc.)")
-    print("  4. Hooks (pre-commit, complexity-detector, etc.)")
-    print("  5. Example Implementations")
-    print("  6. Update Dependencies")
-    print("  7. All of the above (recommended)")
+    print("  1. Skills (12 pattern libraries)")
+    print("  2. Agents (10 specialist agents)")
+    print("  3. Slash Commands (9 commands)")
+    print("  4. Hooks & Scripts (shell hooks + JS hooks + JS libs)")
+    print("  5. Rules (8 common + 5 Python-specific)")
+    print("  6. Example Implementations")
+    print("  7. Update Dependencies")
+    print("  8. All of the above (recommended)")
     print("  ---")
-    print("  8. Orchestrator Agent only")
     print("  9. Session Start Hook only")
     print("  10. Compile Rules → CLAUDE.md only")
     print("  0. Exit")
@@ -465,34 +435,34 @@ def interactive_menu(setup: ProjectSetup):
         print_info("Setup cancelled")
         return
 
-    if choice == "1" or choice == "7":
+    if choice in ("1", "8"):
         setup.setup_skills()
 
-    if choice == "2" or choice == "7":
+    if choice in ("2", "8"):
         setup.setup_agents()
 
-    if choice in ("7", "8"):
-        setup.setup_orchestrator()
-
-    if choice == "3" or choice == "7":
+    if choice in ("3", "8"):
         setup.setup_commands()
 
-    if choice == "4" or choice == "7":
+    if choice in ("4", "8"):
         setup.setup_hooks()
 
-    if choice in ("7", "9"):
+    if choice in ("5", "8"):
+        setup.setup_rules()
+
+    if choice in ("8", "9"):
         setup.install_session_hook()
 
-    if choice in ("7", "10"):
+    if choice in ("8", "10"):
         setup.compile_rules_to_claude_md()
 
-    if choice == "5" or choice == "7":
+    if choice in ("6", "8"):
         setup.setup_examples()
 
-    if choice == "6" or choice == "7":
+    if choice in ("7", "8"):
         setup.update_dependencies()
 
-    if choice == "7":
+    if choice == "8":
         setup.create_readme()
 
     print_header("Setup Complete")
@@ -501,19 +471,26 @@ def interactive_menu(setup: ProjectSetup):
     print_info("\nNext steps:")
     print("  1. pip install -r requirements.txt")
     print("  2. Review .claude/README.md")
-    print("  3. Test with: 'I need to add webhook signature verification'")
-    print("  4. Or just start Claude — the orchestrator will route automatically")
+    print("  3. Use /orchestrate to route tasks to specialist agents")
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Setup Claude Code infrastructure for FastAPI projects"
+        description="Setup Claude Code infrastructure for Python projects"
     )
     parser.add_argument("--target", required=True, help="Target project path")
     parser.add_argument("--source", help="Source path (defaults to script directory)")
     parser.add_argument(
         "--component",
-        choices=["skills", "agents", "commands", "hooks", "examples", "deps"],
+        choices=[
+            "skills",
+            "agents",
+            "commands",
+            "hooks",
+            "rules",
+            "examples",
+            "deps",
+        ],
         help="Install specific component",
     )
     parser.add_argument("--all", action="store_true", help="Install all components")
@@ -530,9 +507,9 @@ def main():
             if args.all:
                 setup.setup_skills()
                 setup.setup_agents()
-                setup.setup_orchestrator()
                 setup.setup_commands()
                 setup.setup_hooks()
+                setup.setup_rules()
                 setup.install_session_hook()
                 setup.compile_rules_to_claude_md()
                 setup.setup_examples()
@@ -546,6 +523,8 @@ def main():
                 setup.setup_commands()
             elif args.component == "hooks":
                 setup.setup_hooks()
+            elif args.component == "rules":
+                setup.setup_rules()
             elif args.component == "examples":
                 setup.setup_examples()
             elif args.component == "deps":
@@ -558,8 +537,6 @@ def main():
 
     except Exception as e:
         print_error(f"Setup failed: {e}")
-        import traceback
-
         traceback.print_exc()
         sys.exit(1)
 

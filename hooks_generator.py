@@ -1,487 +1,153 @@
 """
 Hooks Generator Module
 
-Generates Claude Code hook scripts.
+Copies hook scripts and JS libraries from the .claude/ source directory.
 """
 
+import logging
+import shutil
 from pathlib import Path
 
+logger = logging.getLogger(__name__)
 
-HOOK_TEMPLATES = {
-    "pre-commit": '''#!/usr/bin/env python3
-"""
-Pre-commit Hook
+# Shell/Python hooks in .claude/hooks/
+HOOK_FILES = [
+    "protect-files.sh",
+    "block-dangerous-bash.sh",
+    "session-context.sh",
+    "validate-sql.py",
+]
 
-Runs quality checks before allowing commits.
-"""
+# JS hook scripts in .claude/scripts/hooks/
+JS_HOOK_FILES = [
+    "session-start.js",
+    "session-end.js",
+    "evaluate-session.js",
+    "pre-compact.js",
+    "suggest-compact.js",
+]
 
-import sys
-import subprocess
-from pathlib import Path
-
-
-def run_command(cmd, description):
-    """Run a command and return success status"""
-    print(f"\\n🔍 {description}...")
-    try:
-        result = subprocess.run(
-            cmd,
-            shell=True,
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        print(f"✅ {description} passed")
-        return True
-    except subprocess.CalledProcessError as e:
-        print(f"❌ {description} failed")
-        print(e.stdout)
-        print(e.stderr)
-        return False
+# JS library modules in .claude/scripts/lib/
+JS_LIB_FILES = [
+    "session-manager.js",
+    "session-manager.d.ts",
+    "session-aliases.js",
+    "session-aliases.d.ts",
+    "package-manager.js",
+    "package-manager.d.ts",
+    "utils.js",
+    "utils.d.ts",
+]
 
 
-def main():
-    """Run pre-commit checks"""
-    print("=" * 60)
-    print("Running Pre-Commit Checks")
-    print("=" * 60)
-
-    checks = [
-        ("ruff check app/ --fix", "Code linting (ruff)"),
-        ("ruff format app/", "Code formatting (ruff)"),
-        ("mypy app/ --ignore-missing-imports", "Type checking (mypy)"),
-        ("bandit -r app/ -ll", "Security scan (bandit)"),
-    ]
-
-    all_passed = True
-
-    for cmd, description in checks:
-        if not run_command(cmd, description):
-            all_passed = False
-
-    print("\\n" + "=" * 60)
-
-    if all_passed:
-        print("✅ All pre-commit checks passed!")
-        print("=" * 60)
-        return 0
-    else:
-        print("❌ Some checks failed. Please fix and try again.")
-        print("=" * 60)
-        return 1
+def get_source_dir() -> Path:
+    """Get the source .claude/ directory."""
+    return Path(__file__).parent / ".claude"
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-''',
-    "complexity-detector": '''#!/usr/bin/env python3
-"""
-Complexity Detector Hook
+def _copy_file_list(
+    file_list: list[str],
+    source_dir: Path,
+    target_dir: Path,
+    executable_ext: str | None = None,
+) -> tuple[list[Path], list[str]]:
+    """Copy a list of files from source to target directory.
 
-Analyzes code complexity after edits and suggests refactoring.
-"""
+    Args:
+        file_list: Filenames to copy.
+        source_dir: Source directory containing the files.
+        target_dir: Target directory to copy into.
+        executable_ext: If set, files ending with this get chmod 755.
 
-import sys
-import ast
-import json
-from pathlib import Path
-from typing import Dict, List, Tuple
+    Returns:
+        Tuple of (copied paths, skipped filenames).
+    """
+    target_dir.mkdir(parents=True, exist_ok=True)
 
+    copied: list[Path] = []
+    skipped: list[str] = []
 
-class ComplexityAnalyzer(ast.NodeVisitor):
-    """Calculate cyclomatic complexity"""
-
-    def __init__(self):
-        self.complexity = 1
-        self.functions = []
-
-    def visit_FunctionDef(self, node):
-        func_complexity = self._calculate_function_complexity(node)
-        self.functions.append({
-            "name": node.name,
-            "complexity": func_complexity,
-            "line": node.lineno
-        })
-        self.generic_visit(node)
-
-    def visit_AsyncFunctionDef(self, node):
-        self.visit_FunctionDef(node)
-
-    def _calculate_function_complexity(self, node):
-        """Calculate complexity for a function"""
-        complexity = 1
-
-        for child in ast.walk(node):
-            # Add complexity for control flow
-            if isinstance(child, (ast.If, ast.While, ast.For, ast.AsyncFor)):
-                complexity += 1
-            elif isinstance(child, ast.ExceptHandler):
-                complexity += 1
-            elif isinstance(child, ast.BoolOp):
-                complexity += len(child.values) - 1
-
-        return complexity
-
-
-def analyze_file(filepath: Path) -> Dict:
-    """Analyze a Python file for complexity"""
-    try:
-        with open(filepath, 'r') as f:
-            tree = ast.parse(f.read())
-
-        analyzer = ComplexityAnalyzer()
-        analyzer.visit(tree)
-
-        return {
-            "file": str(filepath),
-            "functions": analyzer.functions,
-            "max_complexity": max((f["complexity"] for f in analyzer.functions), default=0)
-        }
-    except Exception as e:
-        print(f"Error analyzing {filepath}: {e}")
-        return None
-
-
-def main():
-    """Analyze modified Python files"""
-    # Get modified files from Claude context
-    # In practice, this would be passed via environment or args
-    import os
-    modified_files = os.getenv("CLAUDE_MODIFIED_FILES", "").split(",")
-
-    if not modified_files or modified_files == [""]:
-        return 0
-
-    print("\\n🔍 Analyzing code complexity...")
-    high_complexity_functions = []
-
-    for filepath in modified_files:
-        if not filepath.endswith(".py"):
+    for filename in file_list:
+        source = source_dir / filename
+        if not source.exists():
+            logger.warning("Hook source file not found, skipping: %s", source)
+            skipped.append(filename)
             continue
-
-        path = Path(filepath)
-        if not path.exists():
-            continue
-
-        result = analyze_file(path)
-        if not result:
-            continue
-
-        # Flag functions with complexity > 10
-        for func in result["functions"]:
-            if func["complexity"] > 10:
-                high_complexity_functions.append({
-                    "file": result["file"],
-                    "function": func["name"],
-                    "complexity": func["complexity"],
-                    "line": func["line"]
-                })
-
-    if high_complexity_functions:
-        print("\\n⚠️  High complexity functions detected:")
-        for item in high_complexity_functions:
-            print(f"  - {item['file']}:{item['line']} - {item['function']}() "
-                  f"(complexity: {item['complexity']})")
-        print("\\n💡 Consider refactoring functions with complexity > 10")
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-''',
-    "session-start": '''#!/usr/bin/env python3
-"""
-Session Start Hook
-
-Reads skill-rules.json and injects active routing rules into session context.
-Registered under SessionStart in settings.json.
-"""
-
-import json
-import sys
-from pathlib import Path
-
-
-def load_rules(claude_dir: Path) -> dict:
-    rules_file = claude_dir / "skills" / "skill-rules.json"
-    if not rules_file.exists():
-        return {}
-    with open(rules_file) as f:
-        return json.load(f)
-
-
-def load_active_context(dev_dir: Path) -> dict:
-    context = {}
-    for name in ("CONTEXT.md", "TASK.md", "PLAN.md"):
-        f = dev_dir / "active" / name
-        if f.exists():
-            context[name] = f.read_text()[:500]  # first 500 chars only
-    return context
-
-
-def print_routing_table(rules: dict):
-    skills = rules.get("skills", [])
-    if not skills:
-        return
-
-    print("## Active Skill Routes\\n")
-    print("Claude will automatically load these skills based on task intent:\\n")
-
-    agent_map = {
-        "webhook-security":    "webhook-validator",
-        "api-security":        "security-auditor",
-        "resilience-patterns": "kafka-optimizer",
-        "async-kafka":         "kafka-optimizer",
-        "pytorch-patterns":    "ai-engineer",
-        "huggingface-models":  "ai-engineer",
-        "model-optimization":  "ai-engineer",
-    }
-
-    for skill in skills:
-        name = skill["name"]
-        keywords = ", ".join(skill.get("keywords", [])[:3])
-        agent = agent_map.get(name, "—")
-        print(f"- **{name}** | keywords: {keywords} | agent: {agent}")
-
-    print()
-
-
-def print_active_context(context: dict):
-    if not context:
-        return
-
-    print("## Active Project Context\\n")
-    for filename, content in context.items():
-        print(f"### {filename}")
-        print(content.strip())
-        if len(content) >= 500:
-            print("... (truncated)")
-        print()
-
-
-def main():
-    # Locate .claude dir: check CWD and parent
-    cwd = Path.cwd()
-    claude_dir = None
-    for candidate in (cwd / ".claude", cwd.parent / ".claude"):
-        if candidate.exists():
-            claude_dir = candidate
-            break
-
-    if not claude_dir:
-        return 0
-
-    rules = load_rules(claude_dir)
-    dev_dir = claude_dir.parent / "dev"
-    context = load_active_context(dev_dir)
-
-    print_routing_table(rules)
-    print_active_context(context)
-
-    if rules or context:
-        print("---")
-        print("Orchestrator: Use `Task` tool with `orchestrator` agent for complex tasks.")
-        print()
-
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-''',
-    "dependency-checker": '''#!/usr/bin/env python3
-"""
-Dependency Checker Hook
-
-Checks for vulnerabilities and outdated packages when requirements.txt changes.
-"""
-
-import sys
-import subprocess
-import json
-from pathlib import Path
-
-
-def run_safety_check():
-    """Run safety check for known vulnerabilities"""
-    print("🔍 Checking for known vulnerabilities...")
-
-    try:
-        result = subprocess.run(
-            ["safety", "check", "--json"],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-
-        if result.returncode == 0:
-            print("✅ No known vulnerabilities found")
-            return True
-        else:
-            vulnerabilities = json.loads(result.stdout)
-            print(f"❌ Found {len(vulnerabilities)} vulnerabilities:")
-
-            for vuln in vulnerabilities[:5]:  # Show first 5
-                print(f"  - {vuln.get('package', 'Unknown')}: "
-                      f"{vuln.get('vulnerability', 'No description')}")
-
-            if len(vulnerabilities) > 5:
-                print(f"  ... and {len(vulnerabilities) - 5} more")
-
-            return False
-
-    except FileNotFoundError:
-        print("⚠️  safety not installed. Run: pip install safety")
-        return True
-    except Exception as e:
-        print(f"⚠️  Error running safety: {e}")
-        return True
-
-
-def run_pip_audit():
-    """Run pip-audit for comprehensive vulnerability scanning"""
-    print("\\n🔍 Running comprehensive dependency audit...")
-
-    try:
-        result = subprocess.run(
-            ["pip-audit", "--format", "json"],
-            capture_output=True,
-            text=True,
-            check=False
-        )
-
-        if result.returncode == 0:
-            print("✅ Dependency audit passed")
-            return True
-        else:
-            try:
-                issues = json.loads(result.stdout)
-                print(f"❌ Found dependency issues:")
-
-                for issue in issues.get("dependencies", [])[:5]:
-                    print(f"  - {issue.get('name', 'Unknown')}: "
-                          f"{issue.get('version', 'Unknown version')}")
-                    for vuln in issue.get("vulns", [])[:2]:
-                        print(f"    CVE: {vuln.get('id', 'Unknown')}")
-
-                return False
-            except json.JSONDecodeError:
-                print("⚠️  Could not parse pip-audit output")
-                return True
-
-    except FileNotFoundError:
-        print("⚠️  pip-audit not installed. Run: pip install pip-audit")
-        return True
-    except Exception as e:
-        print(f"⚠️  Error running pip-audit: {e}")
-        return True
-
-
-def check_outdated_packages():
-    """Check for outdated packages"""
-    print("\\n🔍 Checking for outdated packages...")
-
-    try:
-        result = subprocess.run(
-            ["pip", "list", "--outdated", "--format", "json"],
-            capture_output=True,
-            text=True,
-            check=True
-        )
-
-        outdated = json.loads(result.stdout)
-
-        if not outdated:
-            print("✅ All packages are up to date")
-            return True
-
-        # Only show major version updates
-        major_updates = [
-            pkg for pkg in outdated
-            if pkg["latest_version"].split(".")[0] != pkg["version"].split(".")[0]
-        ]
-
-        if major_updates:
-            print(f"⚠️  {len(major_updates)} packages have major version updates:")
-            for pkg in major_updates[:5]:
-                print(f"  - {pkg['name']}: {pkg['version']} → {pkg['latest_version']}")
-
-        return True
-
-    except Exception as e:
-        print(f"⚠️  Error checking outdated packages: {e}")
-        return True
-
-
-def main():
-    """Run dependency checks"""
-    import os
-
-    # Check if requirements.txt was modified
-    modified_files = os.getenv("CLAUDE_MODIFIED_FILES", "").split(",")
-
-    if "requirements.txt" not in modified_files:
-        return 0
-
-    print("=" * 60)
-    print("Dependency Security Check")
-    print("=" * 60)
-
-    all_passed = True
-
-    if not run_safety_check():
-        all_passed = False
-
-    if not run_pip_audit():
-        all_passed = False
-
-    check_outdated_packages()
-
-    print("\\n" + "=" * 60)
-
-    if all_passed:
-        print("✅ Dependency checks passed")
-    else:
-        print("❌ Dependency vulnerabilities found!")
-        print("💡 Review and update vulnerable packages")
-
-    print("=" * 60)
-
-    return 0 if all_passed else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())
-''',
-}
-
-
-def create_hook(hook_name: str, hook_file: Path):
-    """Create a hook Python file"""
-    hook_file.parent.mkdir(parents=True, exist_ok=True)
-
-    content = HOOK_TEMPLATES.get(
-        hook_name,
-        f'''#!/usr/bin/env python3
-"""
-{hook_name.replace('-', ' ').title()} Hook
-"""
-
-import sys
-
-def main():
-    print(f"Running {hook_name} hook...")
-    # Hook implementation to be added
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(main())
-''',
+        target = target_dir / filename
+        shutil.copy2(source, target)
+        if executable_ext and filename.endswith(executable_ext):
+            target.chmod(0o755)
+        copied.append(target)
+
+    return copied, skipped
+
+
+def copy_hooks(target_claude_dir: Path) -> tuple[list[Path], list[str]]:
+    """Copy shell/Python hook files to target .claude/hooks/.
+
+    Args:
+        target_claude_dir: Target .claude/ directory.
+
+    Returns:
+        Tuple of (copied paths, skipped filenames).
+    """
+    return _copy_file_list(
+        HOOK_FILES,
+        get_source_dir() / "hooks",
+        target_claude_dir / "hooks",
+        executable_ext=".sh",
     )
 
-    with open(hook_file, "w") as f:
-        f.write(content)
 
-    # Make executable
-    hook_file.chmod(0o755)
+def copy_js_hooks(target_claude_dir: Path) -> tuple[list[Path], list[str]]:
+    """Copy JS hook scripts to target .claude/scripts/hooks/.
+
+    Args:
+        target_claude_dir: Target .claude/ directory.
+
+    Returns:
+        Tuple of (copied paths, skipped filenames).
+    """
+    return _copy_file_list(
+        JS_HOOK_FILES,
+        get_source_dir() / "scripts" / "hooks",
+        target_claude_dir / "scripts" / "hooks",
+    )
+
+
+def copy_js_libs(target_claude_dir: Path) -> tuple[list[Path], list[str]]:
+    """Copy JS library modules to target .claude/scripts/lib/.
+
+    Args:
+        target_claude_dir: Target .claude/ directory.
+
+    Returns:
+        Tuple of (copied paths, skipped filenames).
+    """
+    return _copy_file_list(
+        JS_LIB_FILES,
+        get_source_dir() / "scripts" / "lib",
+        target_claude_dir / "scripts" / "lib",
+    )
+
+
+def copy_all_hooks_and_scripts(
+    target_claude_dir: Path,
+) -> tuple[list[Path], list[str]]:
+    """Copy all hooks, JS hooks, and JS libraries to target.
+
+    Args:
+        target_claude_dir: Target .claude/ directory.
+
+    Returns:
+        Tuple of (all copied paths, all skipped filenames).
+    """
+    all_copied: list[Path] = []
+    all_skipped: list[str] = []
+
+    for copy_fn in (copy_hooks, copy_js_hooks, copy_js_libs):
+        copied, skipped = copy_fn(target_claude_dir)
+        all_copied.extend(copied)
+        all_skipped.extend(skipped)
+
+    return all_copied, all_skipped

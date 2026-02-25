@@ -29,13 +29,28 @@ applying its patterns, checklists, and code templates.
 CLAUDE_MD_FOOTER = """
 ## Orchestrator Protocol
 
-For any non-trivial task:
+For any non-trivial task, use the `/orchestrate` command or:
 1. Read `dev/active/CONTEXT.md` to understand project state
 2. Read `dev/active/TASK.md` for current task definition
 3. Match intent to routing table above
 4. Load matched skill(s) first
 5. Invoke specialist agent if available
 6. Update `dev/active/PLAN.md` before writing code
+
+## Available Agents
+
+| Agent | Purpose |
+|-------|---------|
+| planner | Implementation planning for complex features |
+| architect | System design + API design decisions |
+| tdd-guide | Test-driven development workflow |
+| code-reviewer | Python code quality review |
+| security-reviewer | Security analysis and audit |
+| fastapi-specialist | FastAPI framework patterns |
+| aws-specialist | AWS services integration |
+| k8s-specialist | Kubernetes + container infrastructure |
+| python-database-expert | PostgreSQL + SQLAlchemy + Alembic |
+| python-debugger | Root cause analysis and debugging |
 
 ## Skill Loading Instructions
 
@@ -45,11 +60,33 @@ If a `resources/` directory exists, load referenced files on demand.
 """
 
 
+# Skill → Agent mapping for the routing table
+SKILL_AGENT_MAP: dict[str, str | None] = {
+    "python-patterns": "architect",
+    "async-python-patterns": "fastapi-specialist",
+    "python-testing": "tdd-guide",
+    "tdd-workflow": "tdd-guide",
+    "postgres-patterns": "python-database-expert",
+    "docker-patterns": "k8s-specialist",
+    "deployment-patterns": "k8s-specialist",
+    "security-review": "security-reviewer",
+    "design-doc-mermaid": "architect",
+    "perplexity-deep-search": "planner",
+    "verification-loop": "code-reviewer",
+    "strategic-compact": None,
+}
+
+
 def load_rules(rules_file: Path) -> dict:
     if not rules_file.exists():
         raise FileNotFoundError(f"skill-rules.json not found at: {rules_file}")
     with open(rules_file) as f:
-        return json.load(f)
+        data = json.load(f)
+    if "skills" not in data:
+        raise ValueError(
+            f"Invalid skill-rules.json: missing 'skills' key in {rules_file}"
+        )
+    return data
 
 
 def compile_to_claude_md(
@@ -61,22 +98,12 @@ def compile_to_claude_md(
     lines.append("| Intent | Skill to Load | Specialist Agent |\n")
     lines.append("|--------|--------------|------------------|\n")
 
-    # Agent mapping: skill → agent
-    skill_agent_map = {
-        "webhook-security": "webhook-validator",
-        "api-security": "security-auditor",
-        "resilience-patterns": "kafka-optimizer",
-        "async-kafka": "kafka-optimizer",
-        "pytorch-patterns": "ai-engineer",
-        "huggingface-models": "ai-engineer",
-        "model-optimization": "ai-engineer",
-    }
-
     for skill in rules.get("skills", []):
         name = skill["name"]
         keywords = ", ".join(f"`{k}`" for k in skill.get("keywords", [])[:4])
-        agent = skill_agent_map.get(name, "—")
-        lines.append(f"| {keywords} | `{name}` | `{agent}` |\n")
+        agent = SKILL_AGENT_MAP.get(name)
+        agent_str = f"`{agent}`" if agent else "—"
+        lines.append(f"| {keywords} | `{name}` | {agent_str} |\n")
 
     lines.append("\n### Detailed Pattern Matching\n\n")
 
@@ -85,7 +112,7 @@ def compile_to_claude_md(
         description = skill.get("description", "")
         patterns = skill.get("intentPatterns", [])
         file_paths = skill.get("filePaths", [])
-        agent = skill_agent_map.get(name, None)
+        agent = SKILL_AGENT_MAP.get(name)
 
         lines.append(f"#### `{name}`\n")
         lines.append(f"{description}\n\n")
@@ -123,18 +150,21 @@ def compile_to_claude_md(
 
     # Remove previous generated block if it exists
     start_marker = "## Skill Routing Rules (Auto-Generated"
-    if start_marker in existing:
-        existing = existing[: existing.index(start_marker)].rstrip()
+    idx = existing.find(start_marker)
+    if idx != -1:
+        existing = existing[:idx].rstrip()
 
     updated = existing + "\n\n" + content if existing else content
     claude_md_file.write_text(updated)
-    print(f"✓ CLAUDE.md updated at: {claude_md_file}")
+    print(f"CLAUDE.md updated at: {claude_md_file}")
 
     return content
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compile skill-rules.json → CLAUDE.md")
+    parser = argparse.ArgumentParser(
+        description="Compile skill-rules.json into CLAUDE.md"
+    )
     parser.add_argument("--target", required=True, help="Target project path")
     parser.add_argument(
         "--dry-run", action="store_true", help="Print output without writing"
@@ -154,7 +184,7 @@ def main():
     compile_to_claude_md(rules, claude_md_file, dry_run=args.dry_run)
 
     if not args.dry_run:
-        print("\n✓ Done. Claude will now auto-route based on intent patterns.")
+        print("\nDone. Claude will now auto-route based on intent patterns.")
         print(f"  CLAUDE.md: {claude_md_file}")
 
 

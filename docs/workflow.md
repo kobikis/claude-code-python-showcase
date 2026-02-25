@@ -62,15 +62,17 @@ $ python /path/to/claude-code-python-showcase/compile_rules.py \
 ```
 
 What `--all` installs into `.claude/` inside your project:
-- Domain-specific skills with routing rules (`skill-rules.json`)
-- Orchestrator agent + specialist agents
+- 12 skill directories with routing rules (`skill-rules.json`)
+- 10 specialist agents
+- 9 slash commands
+- Shell hooks + JS hooks + JS library modules
+- 13 rules (8 common + 5 Python-specific)
 - Session-start hook registered in `.claude/settings.json`
-- Project slash commands
 
 Verify the install:
 ```bash
 $ ls .claude/
-agents/  commands/  hooks/  settings.json  skills/
+agents/  commands/  hooks/  rules/  scripts/  settings.json  skills/
 
 $ cat CLAUDE.md
 # Skill Routing

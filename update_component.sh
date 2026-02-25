@@ -1,5 +1,7 @@
 #!/bin/bash
-# Quick component update script for existing installations
+# Quick component update script for existing installations.
+# Copies components from the showcase .claude/ source of truth.
+#
 # Usage: ./update_component.sh /path/to/target/project [component]
 
 set -e
@@ -45,8 +47,7 @@ create_backup() {
     mkdir -p "$backup_dir"
 
     if [ "$component" = "all" ]; then
-        cp -r "$target_path/.claude" "$backup_dir/"
-        [ -f "$target_path/.env" ] && cp "$target_path/.env" "$backup_dir/"
+        [ -d "$target_path/.claude" ] && cp -r "$target_path/.claude" "$backup_dir/"
     else
         case $component in
             skills)
@@ -55,12 +56,15 @@ create_backup() {
             agents)
                 [ -d "$target_path/.claude/agents" ] && cp -r "$target_path/.claude/agents" "$backup_dir/"
                 ;;
+            commands)
+                [ -d "$target_path/.claude/commands" ] && cp -r "$target_path/.claude/commands" "$backup_dir/"
+                ;;
             hooks)
                 [ -d "$target_path/.claude/hooks" ] && cp -r "$target_path/.claude/hooks" "$backup_dir/"
+                [ -d "$target_path/.claude/scripts" ] && cp -r "$target_path/.claude/scripts" "$backup_dir/"
                 ;;
-            mcp)
-                [ -f "$target_path/.claude/settings.json" ] && cp "$target_path/.claude/settings.json" "$backup_dir/"
-                [ -f "$target_path/.env" ] && cp "$target_path/.env" "$backup_dir/"
+            rules)
+                [ -d "$target_path/.claude/rules" ] && cp -r "$target_path/.claude/rules" "$backup_dir/"
                 ;;
         esac
     fi
@@ -72,171 +76,164 @@ update_skills() {
     local target_path=$1
     print_header "Updating Skills"
 
-    # Create skills directory if not exists
+    local skills=(
+        python-patterns
+        async-python-patterns
+        python-testing
+        tdd-workflow
+        postgres-patterns
+        docker-patterns
+        deployment-patterns
+        security-review
+        design-doc-mermaid
+        perplexity-deep-search
+        verification-loop
+        strategic-compact
+    )
+
     mkdir -p "$target_path/.claude/skills"
 
-    # Copy new skills
-    print_info "Copying route-tester skill..."
-    cp -r "$SHOWCASE_DIR/.claude/skills/route-tester" "$target_path/.claude/skills/"
-    print_success "route-tester installed"
+    for skill in "${skills[@]}"; do
+        if [ -d "$SHOWCASE_DIR/.claude/skills/$skill" ]; then
+            print_info "Copying skill: $skill"
+            rm -rf "$target_path/.claude/skills/$skill"
+            cp -r "$SHOWCASE_DIR/.claude/skills/$skill" "$target_path/.claude/skills/"
+            print_success "$skill installed"
+        else
+            print_warning "Source skill not found: $skill"
+        fi
+    done
 
-    print_info "Copying error-tracking skill..."
-    cp -r "$SHOWCASE_DIR/.claude/skills/error-tracking" "$target_path/.claude/skills/"
-    print_success "error-tracking installed"
-
-    # Update skill-rules.json
-    print_info "Updating skill-rules.json..."
-    cp "$SHOWCASE_DIR/.claude/skills/skill-rules.json" "$target_path/.claude/skills/skill-rules.json"
-    print_success "skill-rules.json updated"
-
-    print_success "Skills update complete"
+    # Generate skill-rules.json via Python
+    print_info "Generating skill-rules.json..."
+    SHOWCASE_DIR="$SHOWCASE_DIR" TARGET_PATH="$target_path" python3 - <<'PYEOF'
+import sys, os
+sys.path.insert(0, os.environ["SHOWCASE_DIR"])
+from skills_generator import SKILL_NAMES, generate_skill_rules
+from pathlib import Path
+generate_skill_rules(SKILL_NAMES, Path(os.environ["TARGET_PATH"]) / ".claude/skills/skill-rules.json")
+print("skill-rules.json generated")
+PYEOF
+    print_success "Skills update complete (${#skills[@]} skills)"
 }
 
 update_agents() {
     local target_path=$1
     print_header "Updating Agents"
 
-    # Create agents directory if not exists
+    local agents=(
+        planner
+        architect
+        tdd-guide
+        code-reviewer
+        security-reviewer
+        fastapi-specialist
+        aws-specialist
+        k8s-specialist
+        python-database-expert
+        python-debugger
+    )
+
     mkdir -p "$target_path/.claude/agents"
 
-    # Copy new agent
-    print_info "Copying vapi-ai-expert agent..."
-    cp "$SHOWCASE_DIR/.claude/agents/vapi-ai-expert.md" "$target_path/.claude/agents/"
-    print_success "vapi-ai-expert installed"
+    for agent in "${agents[@]}"; do
+        if [ -f "$SHOWCASE_DIR/.claude/agents/${agent}.md" ]; then
+            print_info "Copying agent: $agent"
+            cp "$SHOWCASE_DIR/.claude/agents/${agent}.md" "$target_path/.claude/agents/"
+            print_success "$agent installed"
+        else
+            print_warning "Source agent not found: $agent"
+        fi
+    done
 
-    print_success "Agents update complete"
+    print_success "Agents update complete (${#agents[@]} agents)"
+}
+
+update_commands() {
+    local target_path=$1
+    print_header "Updating Commands"
+
+    local commands=(
+        pr
+        plan
+        tdd
+        code-review
+        build-fix
+        test-coverage
+        verify
+        update-docs
+        orchestrate
+    )
+
+    mkdir -p "$target_path/.claude/commands"
+
+    for cmd in "${commands[@]}"; do
+        if [ -f "$SHOWCASE_DIR/.claude/commands/${cmd}.md" ]; then
+            print_info "Copying command: /$cmd"
+            cp "$SHOWCASE_DIR/.claude/commands/${cmd}.md" "$target_path/.claude/commands/"
+            print_success "/$cmd installed"
+        else
+            print_warning "Source command not found: $cmd"
+        fi
+    done
+
+    print_success "Commands update complete (${#commands[@]} commands)"
 }
 
 update_hooks() {
     local target_path=$1
-    print_header "Updating Hooks"
+    print_header "Updating Hooks & Scripts"
 
-    # Create hooks directory if not exists
+    # Shell/Python hooks
     mkdir -p "$target_path/.claude/hooks"
+    if [ -d "$SHOWCASE_DIR/.claude/hooks" ]; then
+        print_info "Copying shell/Python hooks..."
+        cp "$SHOWCASE_DIR/.claude/hooks/"* "$target_path/.claude/hooks/" 2>/dev/null || true
+        print_success "Shell/Python hooks copied"
+    fi
 
-    # Copy hooks
-    print_info "Copying hooks..."
-    cp "$SHOWCASE_DIR/.claude/hooks/skill-activation-prompt.py" "$target_path/.claude/hooks/"
-    cp "$SHOWCASE_DIR/.claude/hooks/post-tool-use-tracker.py" "$target_path/.claude/hooks/"
-    cp "$SHOWCASE_DIR/.claude/hooks/mypy-check.py" "$target_path/.claude/hooks/"
-    cp "$SHOWCASE_DIR/.claude/hooks/requirements.txt" "$target_path/.claude/hooks/"
-    print_success "Hooks copied"
+    # JS hook scripts
+    mkdir -p "$target_path/.claude/scripts/hooks"
+    if [ -d "$SHOWCASE_DIR/.claude/scripts/hooks" ]; then
+        print_info "Copying JS hook scripts..."
+        cp "$SHOWCASE_DIR/.claude/scripts/hooks/"* "$target_path/.claude/scripts/hooks/" 2>/dev/null || true
+        print_success "JS hook scripts copied"
+    fi
 
-    # Install requirements
-    print_info "Installing hook dependencies..."
-    pip install -r "$target_path/.claude/hooks/requirements.txt" --quiet
-    print_success "Dependencies installed"
+    # JS library modules
+    mkdir -p "$target_path/.claude/scripts/lib"
+    if [ -d "$SHOWCASE_DIR/.claude/scripts/lib" ]; then
+        print_info "Copying JS library modules..."
+        cp "$SHOWCASE_DIR/.claude/scripts/lib/"* "$target_path/.claude/scripts/lib/" 2>/dev/null || true
+        print_success "JS library modules copied"
+    fi
 
-    print_success "Hooks update complete"
+    print_success "Hooks & scripts update complete"
 }
 
-update_mcp() {
+update_rules() {
     local target_path=$1
-    print_header "Updating MCP Configuration"
+    print_header "Updating Rules"
 
-    # Check if settings.json exists
-    if [ ! -f "$target_path/.claude/settings.json" ]; then
-        print_error "settings.json not found. Creating new one..."
-        cp "$SHOWCASE_DIR/.claude/settings.json" "$target_path/.claude/settings.json"
-        print_warning "Please update database connection strings and other settings"
-    else
-        print_info "Merging MCP servers into existing settings.json..."
-
-        # Use Python to safely merge MCP servers
-        python3 << EOF
-import json
-import sys
-
-try:
-    # Read showcase settings to get MCP servers
-    with open('$SHOWCASE_DIR/.claude/settings.json', 'r') as f:
-        showcase_settings = json.load(f)
-
-    # Read target settings
-    with open('$target_path/.claude/settings.json', 'r') as f:
-        target_settings = json.load(f)
-
-    # Ensure mcpServers exists in target
-    if 'mcpServers' not in target_settings:
-        target_settings['mcpServers'] = {}
-
-    # Merge MCP servers from showcase
-    showcase_mcps = showcase_settings.get('mcpServers', {})
-    added = []
-    updated = []
-
-    for server_name, server_config in showcase_mcps.items():
-        if server_name not in target_settings['mcpServers']:
-            target_settings['mcpServers'][server_name] = server_config
-            added.append(server_name)
-        else:
-            # Server exists - check if it's different
-            if target_settings['mcpServers'][server_name] != server_config:
-                # Keep existing (don't overwrite user customizations)
-                updated.append(f"{server_name} (kept existing)")
-
-    # Write back
-    with open('$target_path/.claude/settings.json', 'w') as f:
-        json.dump(target_settings, f, indent=2)
-        f.write('\n')
-
-    # Print results
-    if added:
-        print(f"Added MCP servers: {', '.join(added)}")
-    if updated:
-        print(f"Existing servers unchanged: {', '.join(updated)}")
-
-    sys.exit(0)
-
-except Exception as e:
-    print(f"Error merging settings: {e}", file=sys.stderr)
-    sys.exit(1)
-EOF
-
-        if [ $? -eq 0 ]; then
-            print_success "MCP servers merged successfully"
-        else
-            print_error "Failed to merge MCP servers automatically"
-            print_info "Please manually add MCP servers from showcase's settings.json"
-        fi
+    # Common rules
+    if [ -d "$SHOWCASE_DIR/.claude/rules/common" ]; then
+        mkdir -p "$target_path/.claude/rules/common"
+        print_info "Copying common rules..."
+        cp "$SHOWCASE_DIR/.claude/rules/common/"*.md "$target_path/.claude/rules/common/" 2>/dev/null || true
+        local count=$(ls -1 "$target_path/.claude/rules/common/"*.md 2>/dev/null | wc -l | tr -d ' ')
+        print_success "Common rules copied: $count files"
     fi
 
-    # Copy .env.example if not exists
-    if [ ! -f "$target_path/.env.example" ]; then
-        print_info "Copying .env.example..."
-        cp "$SHOWCASE_DIR/.env.example" "$target_path/"
-        print_success ".env.example copied"
+    # Python rules
+    if [ -d "$SHOWCASE_DIR/.claude/rules/python" ]; then
+        mkdir -p "$target_path/.claude/rules/python"
+        print_info "Copying Python rules..."
+        cp "$SHOWCASE_DIR/.claude/rules/python/"*.md "$target_path/.claude/rules/python/" 2>/dev/null || true
+        local count=$(ls -1 "$target_path/.claude/rules/python/"*.md 2>/dev/null | wc -l | tr -d ' ')
+        print_success "Python rules copied: $count files"
     fi
 
-    # Check for .env
-    if [ ! -f "$target_path/.env" ]; then
-        print_warning ".env not found. Create one from .env.example"
-        print_info "cp .env.example .env"
-        print_info "Then add your API keys"
-    fi
-
-    print_success "MCP configuration updated"
-}
-
-update_docs() {
-    local target_path=$1
-    print_header "Updating Documentation"
-
-    print_info "Copying MCP_SETUP.md..."
-    cp "$SHOWCASE_DIR/MCP_SETUP.md" "$target_path/"
-    print_success "MCP_SETUP.md copied"
-
-    print_info "Copying UPDATE_TARGET_PROJECT.md..."
-    cp "$SHOWCASE_DIR/UPDATE_TARGET_PROJECT.md" "$target_path/"
-    print_success "UPDATE_TARGET_PROJECT.md copied"
-
-    if [ -f "$target_path/PROJECT_STRUCTURE.md" ]; then
-        print_info "Updating PROJECT_STRUCTURE.md..."
-        cp "$SHOWCASE_DIR/PROJECT_STRUCTURE.md" "$target_path/"
-        print_success "PROJECT_STRUCTURE.md updated"
-    fi
-
-    print_success "Documentation update complete"
+    print_success "Rules update complete"
 }
 
 update_all() {
@@ -247,16 +244,15 @@ update_all() {
     create_backup "$target_path" "all"
     update_skills "$target_path"
     update_agents "$target_path"
+    update_commands "$target_path"
     update_hooks "$target_path"
-    update_mcp "$target_path"
-    update_docs "$target_path"
+    update_rules "$target_path"
 
     print_header "Update Complete!"
     print_info "Next steps:"
-    echo "  1. Review .claude/settings.json for MCP configuration"
-    echo "  2. Add API keys to .env file"
+    echo "  1. Review changes in .claude/"
+    echo "  2. Run: python compile_rules.py --target \"$target_path\""
     echo "  3. Restart Claude Code"
-    echo "  4. Test with: 'What MCP servers do you have access to?'"
 }
 
 # Main script
@@ -265,11 +261,11 @@ main() {
         echo "Usage: $0 /path/to/target/project [component]"
         echo ""
         echo "Components:"
-        echo "  skills    - Update skills (route-tester, error-tracking)"
-        echo "  agents    - Update agents (vapi-ai-expert)"
-        echo "  hooks     - Update hooks"
-        echo "  mcp       - Update MCP configuration"
-        echo "  docs      - Update documentation"
+        echo "  skills    - Update 12 skill directories"
+        echo "  agents    - Update 10 specialist agents"
+        echo "  commands  - Update 9 slash commands"
+        echo "  hooks     - Update hooks + JS scripts + JS libs"
+        echo "  rules     - Update common + Python rules"
         echo "  all       - Update everything (default)"
         echo ""
         echo "Example:"
@@ -305,23 +301,24 @@ main() {
             create_backup "$TARGET_PATH" "agents"
             update_agents "$TARGET_PATH"
             ;;
+        commands)
+            create_backup "$TARGET_PATH" "commands"
+            update_commands "$TARGET_PATH"
+            ;;
         hooks)
             create_backup "$TARGET_PATH" "hooks"
             update_hooks "$TARGET_PATH"
             ;;
-        mcp)
-            create_backup "$TARGET_PATH" "mcp"
-            update_mcp "$TARGET_PATH"
-            ;;
-        docs)
-            update_docs "$TARGET_PATH"
+        rules)
+            create_backup "$TARGET_PATH" "rules"
+            update_rules "$TARGET_PATH"
             ;;
         all)
             update_all "$TARGET_PATH"
             ;;
         *)
             print_error "Unknown component: $COMPONENT"
-            echo "Valid components: skills, agents, hooks, mcp, docs, all"
+            echo "Valid components: skills, agents, commands, hooks, rules, all"
             exit 1
             ;;
     esac

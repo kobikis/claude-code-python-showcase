@@ -4,6 +4,36 @@ All notable changes to this project are documented here.
 
 ---
 
+## [4.0.0] — 2026-02-25
+
+### Changed
+
+**Generators: inline templates → file-copy from `.claude/` source**
+
+The generator system was overhauled to copy files from the `.claude/` directory
+(source of truth) instead of embedding ~7,700 lines of duplicated markdown as
+Python string templates. This eliminates the maintenance burden of keeping
+generators in sync with the personal config.
+
+- `agents_generator.py` (~778 → ~55 lines) — `shutil.copy2` from `.claude/agents/`
+- `commands_generator.py` (~655 → ~55 lines) — `shutil.copy2` from `.claude/commands/`
+- `skills_generator.py` (~743 → ~170 lines) — `shutil.copytree` from `.claude/skills/` + `SKILL_METADATA` for routing
+- `hooks_generator.py` (~488 → ~120 lines) — copies shell hooks, JS hooks, and JS library modules
+- `examples_generator.py` — 5 new examples aligned with current skills (repository_pattern, pydantic_v2_models, health_endpoints, async_service, base_service)
+- `compile_rules.py` — updated skill→agent routing map (12 skills → 10 agents)
+- `setup_target_project.py` — added `setup_rules()`, `setup_scripts()`, removed `setup_orchestrator()`; updated all component lists
+- `update_component.sh` — added `update_commands()`, `update_rules()`; updated all component lists
+
+### Removed
+
+- `skills_content.py` — PyTorch, HuggingFace, model-optimization content no longer needed
+- Old example templates (circuit_breaker, idempotency, webhook_verifier, async_kafka) — replaced with current-skill-aligned examples
+- Old agent templates (orchestrator, webhook-validator, kafka-optimizer, security-auditor, async-converter, ai-engineer) — replaced by file-copy of 10 current agents
+- Old command templates (check-prod-readiness, kafka-health, webhook-test, security-scan, migrate-pydantic-v2) — replaced by file-copy of 9 current commands
+- Old skill templates (webhook-security, api-security, resilience-patterns, pytorch-patterns, huggingface-models, model-optimization) — replaced by file-copy of 12 current skills
+
+---
+
 ## [3.0.0] — 2026-02-25
 
 ### Added

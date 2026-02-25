@@ -34,11 +34,10 @@ claude-code-python-showcase/
 │
 ├── setup_target_project.py     ← Install infrastructure into a target project
 ├── compile_rules.py            ← Compile skill-rules.json → CLAUDE.md
-├── agents_generator.py         Agent template definitions
-├── commands_generator.py       Command template definitions
-├── hooks_generator.py          Hook script templates
-├── skills_generator.py         Skill directory + rules generator
-├── skills_content.py           AI/ML skill content (PyTorch, HuggingFace)
+├── agents_generator.py         Copies agents from .claude/agents/
+├── commands_generator.py       Copies commands from .claude/commands/
+├── hooks_generator.py          Copies hooks + JS scripts from .claude/
+├── skills_generator.py         Copies skills from .claude/skills/ + generates skill-rules.json
 ├── examples_generator.py       Example implementation templates
 ├── update_component.sh         Update components in an existing installation
 └── dev/active/                 Active feature context (CONTEXT.md, TASK.md, PLAN.md)
@@ -86,14 +85,15 @@ The personal config uses **agents + commands + skills as standalone components**
 python setup_target_project.py --target /path/to/your/project --all
 ```
 
-This installs into the target project's `.claude/`:
+This copies the same `.claude/` infrastructure from the showcase into your target project:
 
 | Component | What gets installed |
 |-----------|-------------------|
-| **Skills** | webhook-security, api-security, resilience-patterns, async-kafka, pytorch-patterns, huggingface-models, model-optimization |
-| **Agents** | orchestrator, webhook-validator, kafka-optimizer, security-auditor, async-converter, ai-engineer |
-| **Commands** | /check-prod-readiness, /kafka-health, /webhook-test, /security-scan, /migrate-pydantic-v2 |
-| **Hooks** | pre-commit (ruff/mypy/bandit), complexity-detector, session-start (skill routing), dependency-checker |
+| **Skills** (12) | python-patterns, async-python-patterns, python-testing, tdd-workflow, postgres-patterns, docker-patterns, deployment-patterns, security-review, design-doc-mermaid, perplexity-deep-search, verification-loop, strategic-compact |
+| **Agents** (10) | planner, architect, tdd-guide, code-reviewer, security-reviewer, fastapi-specialist, aws-specialist, k8s-specialist, python-database-expert, python-debugger |
+| **Commands** (9) | /pr, /plan, /tdd, /code-review, /build-fix, /test-coverage, /verify, /update-docs, /orchestrate |
+| **Hooks** | 4 shell hooks + 5 JS hooks + 4 JS library modules |
+| **Rules** (13) | 8 common + 5 Python-specific coding rules |
 
 Then compile skill routing rules into `CLAUDE.md`:
 ```bash
@@ -104,6 +104,7 @@ Or install individual components:
 ```bash
 python setup_target_project.py --target /path/to/project --component skills
 python setup_target_project.py --target /path/to/project --component agents
+python setup_target_project.py --target /path/to/project --component rules
 ```
 
 ### 3-Layer Skill Routing (target projects only)
@@ -116,24 +117,29 @@ Layer 1 — CLAUDE.md (native, always loaded)
   into CLAUDE.md. Claude reads this natively every session.
 
 Layer 2 — SessionStart hook (injected at session start)
-  session-start hook reads skill-rules.json + dev/active/*.md and injects
+  session-start.js reads skill-rules.json + dev/active/*.md and injects
   the routing table + project context into every session automatically.
 
-Layer 3 — Orchestrator agent (explicit routing)
-  Reads intent → matches routing table → loads skill SKILL.md →
-  dispatches to specialist agent via Task tool.
+Layer 3 — /orchestrate command (explicit routing)
+  Chains agents in a pipeline: planner → tdd-guide → code-reviewer →
+  security-reviewer, loading relevant skills at each step.
 ```
 
 **Routing table** (generated from `skill-rules.json`):
 
 | Intent keywords | Skill loaded | Agent invoked |
 |----------------|-------------|---------------|
-| webhook, signature, hmac | `webhook-security` | `webhook-validator` |
-| auth, jwt, api key, rate limit | `api-security` | `security-auditor` |
-| kafka, consumer, producer, dlq | `async-kafka` + `resilience-patterns` | `kafka-optimizer` |
-| circuit breaker, retry, backoff | `resilience-patterns` | `kafka-optimizer` |
-| pytorch, training, gpu, cuda | `pytorch-patterns` | `ai-engineer` |
-| huggingface, transformers | `huggingface-models` | `ai-engineer` |
+| python, framework, type hints | `python-patterns` | `architect` |
+| async, await, asyncio | `async-python-patterns` | `fastapi-specialist` |
+| pytest, test, coverage | `python-testing` | `tdd-guide` |
+| tdd, test first | `tdd-workflow` | `tdd-guide` |
+| postgres, sql, schema | `postgres-patterns` | `python-database-expert` |
+| docker, container | `docker-patterns` | `k8s-specialist` |
+| deploy, ci/cd, health check | `deployment-patterns` | `k8s-specialist` |
+| security, auth, vulnerability | `security-review` | `security-reviewer` |
+| mermaid, diagram | `design-doc-mermaid` | `architect` |
+| search, research | `perplexity-deep-search` | `planner` |
+| verify, validate | `verification-loop` | `code-reviewer` |
 
 > **Note:** The personal config (Use Case 1) does **not** include `skill-rules.json` or automatic routing. It uses explicit agent invocation and slash commands instead.
 
@@ -231,7 +237,7 @@ Python (5): `coding-style`, `hooks`, `patterns`, `security`, `testing`
 
 **Agents as domain experts** — Each agent has explicit activation patterns and a mandatory first step: load its domain skill before any analysis.
 
-**Generator = source of truth** — Infrastructure is generated from Python templates. Edit the generators, regenerate; don't edit generated files directly.
+**`.claude/` = source of truth** — Generators copy files from the `.claude/` directory instead of embedding content as Python strings. Edit `.claude/` files directly; generators just copy them.
 
 **500-line rule** — SKILL.md stays under 500 lines. Detailed content lives in `resources/*.md`, loaded on demand to avoid context explosion.
 
