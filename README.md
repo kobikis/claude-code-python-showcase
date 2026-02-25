@@ -1,12 +1,12 @@
 # Claude Code Python Showcase
 
-> Production-ready Claude Code infrastructure for Python projects — with automatic skill routing, specialist agents, and personal config management.
+> Production-ready Claude Code infrastructure for Python projects — specialist agents, curated skills, slash commands, and personal config management.
 
 ## What This Repo Is
 
 Two things in one:
 
-1. **Generator system** — Python scripts that install Claude Code infrastructure (skills, agents, hooks, commands) into any target FastAPI project
+1. **Generator system** — Python scripts that install Claude Code infrastructure (skills, agents, hooks, commands) into any target FastAPI project — including automatic skill routing
 2. **Personal config store** — `.claude/` mirrors `~/.claude/`, version-controlled and installable on any machine
 
 ---
@@ -17,12 +17,17 @@ Two things in one:
 claude-code-python-showcase/
 │
 ├── .claude/                    ← Personal config (mirrors ~/.claude/)
-│   ├── agents/                 22 agents (planner, code-reviewer, tdd-guide, etc.)
-│   ├── commands/               2 slash commands (pr, dev-docs)
-│   ├── skills/                 42 skills (python-patterns, postgres, docker, etc.)
-│   ├── hooks/                  4 hook scripts (block-dangerous-bash, protect-files, etc.)
-│   ├── scripts/                pg-mcp.sh (PostgreSQL MCP bridge)
-│   ├── rules/common/           8 global coding rules
+│   ├── agents/                 10 specialist agents
+│   ├── commands/               9 slash commands (pr, plan, tdd, code-review, etc.)
+│   ├── skills/                 12 curated skills (python-patterns, postgres, docker, etc.)
+│   ├── hooks/                  4 shell hook scripts (block-dangerous-bash, protect-files, etc.)
+│   ├── scripts/
+│   │   ├── hooks/              5 JS hook scripts (session-start, session-end, etc.)
+│   │   ├── lib/                4 JS utility modules (session-manager, utils, etc.)
+│   │   └── pg-mcp.sh          PostgreSQL MCP bridge
+│   ├── rules/
+│   │   ├── common/             8 global coding rules
+│   │   └── python/             5 Python-specific rules
 │   ├── mcp/                    MCP server configs + hooks config
 │   ├── settings.json           Project Claude settings
 │   └── install.sh              ← Install personal config to ~/.claude/
@@ -64,6 +69,15 @@ git diff .claude/                   # review
 git add .claude/ && git commit
 ```
 
+### How the personal config works
+
+The personal config uses **agents + commands + skills as standalone components** — no automatic routing. You invoke them explicitly:
+
+- **Slash commands** (`/plan`, `/tdd`, `/code-review`, etc.) — trigger predefined workflows
+- **Agent dispatch** (`Use planner agent...`, `Use tdd-guide...`) — invoke specialists by name
+- **`/orchestrate`** — chains agents in a fixed pipeline (e.g., planner → tdd-guide → code-reviewer → security-reviewer)
+- **Skills** — knowledge libraries loaded by agents on demand, not auto-routed
+
 ---
 
 ## Use Case 2: Install Infrastructure Into a Target Project
@@ -92,11 +106,9 @@ python setup_target_project.py --target /path/to/project --component skills
 python setup_target_project.py --target /path/to/project --component agents
 ```
 
----
+### 3-Layer Skill Routing (target projects only)
 
-## The 3-Layer Skill Routing Architecture
-
-The core innovation: skills activate automatically based on intent, not manual invocation.
+When installed into a target project via `setup_target_project.py`, the generator creates a `skill-rules.json` routing table that enables automatic skill activation based on intent — not manual invocation.
 
 ```
 Layer 1 — CLAUDE.md (native, always loaded)
@@ -104,15 +116,15 @@ Layer 1 — CLAUDE.md (native, always loaded)
   into CLAUDE.md. Claude reads this natively every session.
 
 Layer 2 — SessionStart hook (injected at session start)
-  session-start.py prints the active routing table + project context
-  (CONTEXT.md, TASK.md) into every session automatically.
+  session-start hook reads skill-rules.json + dev/active/*.md and injects
+  the routing table + project context into every session automatically.
 
 Layer 3 — Orchestrator agent (explicit routing)
   Reads intent → matches routing table → loads skill SKILL.md →
   dispatches to specialist agent via Task tool.
 ```
 
-**Routing table** (from `skill-rules.json`):
+**Routing table** (generated from `skill-rules.json`):
 
 | Intent keywords | Skill loaded | Agent invoked |
 |----------------|-------------|---------------|
@@ -123,27 +135,58 @@ Layer 3 — Orchestrator agent (explicit routing)
 | pytorch, training, gpu, cuda | `pytorch-patterns` | `ai-engineer` |
 | huggingface, transformers | `huggingface-models` | `ai-engineer` |
 
+> **Note:** The personal config (Use Case 1) does **not** include `skill-rules.json` or automatic routing. It uses explicit agent invocation and slash commands instead.
+
 ---
 
 ## Personal Config: What's Included
 
-### Agents (22)
-General-purpose: `planner`, `architect`, `code-reviewer`, `security-reviewer`, `tdd-guide`, `refactor-cleaner`, `doc-updater`, `e2e-runner`, `build-error-resolver`
+### Agents (10)
 
-Language-specific: `python-reviewer`, `python-pro`, `go-reviewer`, `go-build-resolver`
+Core workflow: `planner`, `architect`, `code-reviewer`, `security-reviewer`, `tdd-guide`
 
-Domain-specific: `api-designer`, `backend-developer`, `database-reviewer`, `database-optimizer`, `qa-expert`
+Stack-specific: `fastapi-specialist`, `aws-specialist`, `k8s-specialist`
 
-### Skills (42)
-Python: `python-patterns` (sickn33 2025), `async-python-patterns`, `python-testing-patterns`, `python-testing`
+Database: `python-database-expert`
 
-Infrastructure: `postgres-patterns`, `docker-patterns`, `deployment-patterns`, `database-migrations`
+Debugging: `python-debugger`
 
-AI/Web search: `perplexity-deep-search` (ericsantos bash impl)
+### Commands (9)
 
-And more: `api-design`, `backend-patterns`, `security-review`, `tdd-workflow`, `frontend-patterns`, `design-doc-mermaid`, `cost-aware-llm-pipeline`, ...
+| Command | Purpose |
+|---------|---------|
+| `/pr` | Create GitHub pull request |
+| `/plan` | Restate requirements, assess risks, create implementation plan |
+| `/tdd` | Enforce test-driven development workflow |
+| `/code-review` | Run code review on changed files |
+| `/build-fix` | Build project and fix errors |
+| `/test-coverage` | Analyze and report test coverage |
+| `/verify` | Run verification checks |
+| `/update-docs` | Update documentation |
+| `/orchestrate` | Orchestrate multi-agent workflows |
 
-### Hooks (4 active)
+### Skills (12)
+
+Python: `python-patterns`, `async-python-patterns`, `python-testing`, `tdd-workflow`
+
+Infrastructure: `postgres-patterns`, `docker-patterns`, `deployment-patterns`
+
+Security: `security-review`
+
+Diagramming: `design-doc-mermaid`
+
+AI/Web search: `perplexity-deep-search`
+
+Workflow: `verification-loop`, `strategic-compact`
+
+### Rules (13)
+
+Common (8): `coding-style`, `git-workflow`, `testing`, `security`, `performance`, `patterns`, `agents`, `hooks`
+
+Python (5): `coding-style`, `hooks`, `patterns`, `security`, `testing`
+
+### Hooks — Shell Scripts (4)
+
 | Hook | Event | Purpose |
 |------|-------|---------|
 | `block-dangerous-bash.sh` | `PreToolUse (Bash)` | Blocks `rm -rf /`, `curl\|bash` |
@@ -151,7 +194,27 @@ And more: `api-design`, `backend-patterns`, `security-review`, `tdd-workflow`, `
 | `session-context.sh` | `SessionStart` | Re-injects project context |
 | `validate-sql.py` | `PreToolUse (MCP postgres)` | Validates SQL before execution |
 
+### Hooks — JS Scripts (5)
+
+| Script | Purpose |
+|--------|---------|
+| `session-start.js` | Load previous session context and learned skills |
+| `session-end.js` | Cleanup and session summary |
+| `evaluate-session.js` | Post-session evaluation |
+| `pre-compact.js` | Save state before context compaction |
+| `suggest-compact.js` | Suggest compaction at logical boundaries |
+
+### JS Utility Libraries (4)
+
+| Module | Purpose |
+|--------|---------|
+| `package-manager.js` | Package manager detection and operations |
+| `session-aliases.js` | Session alias management |
+| `session-manager.js` | Session lifecycle management |
+| `utils.js` | Common utilities |
+
 ### MCP Servers
+
 | Name | Purpose |
 |------|---------|
 | `cmem` | Session memory + lesson tracking |
@@ -159,9 +222,6 @@ And more: `api-design`, `backend-patterns`, `security-review`, `tdd-workflow`, `
 | `mermaid` | Mermaid diagram live preview |
 | `postgres-customer` | Customer DB read-only access |
 | `postgres-processing` | Processing DB read-only access |
-
-### Rules (8)
-`coding-style`, `git-workflow`, `testing`, `security`, `performance`, `patterns`, `agents`, `hooks`
 
 ---
 

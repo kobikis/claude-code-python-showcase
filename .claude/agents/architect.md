@@ -82,18 +82,11 @@ For each design decision, document:
 
 ## Common Patterns
 
-### Frontend Patterns
-- **Component Composition**: Build complex UI from simple components
-- **Container/Presenter**: Separate data logic from presentation
-- **Custom Hooks**: Reusable stateful logic
-- **Context for Global State**: Avoid prop drilling
-- **Code Splitting**: Lazy load routes and heavy components
-
 ### Backend Patterns
 - **Repository Pattern**: Abstract data access
 - **Service Layer**: Business logic separation
 - **Middleware Pattern**: Request/response processing
-- **Event-Driven Architecture**: Async operations
+- **Event-Driven Architecture**: Async operations via Kafka/SQS
 - **CQRS**: Separate read and write operations
 
 ### Data Patterns
@@ -102,6 +95,38 @@ For each design decision, document:
 - **Event Sourcing**: Audit trail and replayability
 - **Caching Layers**: Redis, CDN
 - **Eventual Consistency**: For distributed systems
+
+### API Design Patterns
+When designing APIs as part of architecture work:
+
+**REST Principles:**
+- Resource-oriented URIs, proper HTTP method semantics
+- Idempotency guarantees (PUT, DELETE)
+- Cache-control headers, content negotiation
+- Consistent error format with actionable messages
+
+**Versioning Strategy:**
+- URI versioning (`/v1/`, `/v2/`) for major breaking changes
+- Deprecation policy with sunset headers
+- Breaking change management and client migration paths
+
+**Pagination & Filtering:**
+- Cursor-based pagination for large datasets (preferred over offset)
+- Consistent filter/sort query parameters
+- Total count as opt-in (expensive on large tables)
+
+**Bulk & Webhook Patterns:**
+- Batch endpoints with partial success handling
+- Webhook events with HMAC signatures, retry with backoff, idempotency keys
+
+**Authentication:**
+- OAuth 2.0 / JWT flows, API key management
+- Permission scoping, rate limit integration
+
+**OpenAPI Specification:**
+- OpenAPI 3.1 as source of truth
+- Request/response examples for every endpoint
+- Error code catalog with resolution guidance
 
 ## Architecture Decision Records (ADRs)
 
@@ -182,30 +207,5 @@ Watch for these architectural anti-patterns:
 - **Magic**: Unclear, undocumented behavior
 - **Tight Coupling**: Components too dependent
 - **God Object**: One class/component does everything
-
-## Project-Specific Architecture (Example)
-
-Example architecture for an AI-powered SaaS platform:
-
-### Current Architecture
-- **Frontend**: Next.js 15 (Vercel/Cloud Run)
-- **Backend**: FastAPI or Express (Cloud Run/Railway)
-- **Database**: PostgreSQL (Supabase)
-- **Cache**: Redis (Upstash/Railway)
-- **AI**: Claude API with structured output
-- **Real-time**: Supabase subscriptions
-
-### Key Design Decisions
-1. **Hybrid Deployment**: Vercel (frontend) + Cloud Run (backend) for optimal performance
-2. **AI Integration**: Structured output with Pydantic/Zod for type safety
-3. **Real-time Updates**: Supabase subscriptions for live data
-4. **Immutable Patterns**: Spread operators for predictable state
-5. **Many Small Files**: High cohesion, low coupling
-
-### Scalability Plan
-- **10K users**: Current architecture sufficient
-- **100K users**: Add Redis clustering, CDN for static assets
-- **1M users**: Microservices architecture, separate read/write databases
-- **10M users**: Event-driven architecture, distributed caching, multi-region
 
 **Remember**: Good architecture enables rapid development, easy maintenance, and confident scaling. The best architecture is simple, clear, and follows established patterns.

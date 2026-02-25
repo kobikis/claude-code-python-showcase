@@ -4,6 +4,91 @@ All notable changes to this project are documented here.
 
 ---
 
+## [3.0.0] — 2026-02-25
+
+### Added
+
+**Slash Commands (7 new)**
+- `.claude/commands/plan.md` — restate requirements, assess risks, create step-by-step implementation plan
+- `.claude/commands/tdd.md` — enforce test-driven development workflow with 80%+ coverage
+- `.claude/commands/code-review.md` — run code review on changed files
+- `.claude/commands/build-fix.md` — build project and fix errors iteratively
+- `.claude/commands/test-coverage.md` — analyze and report test coverage
+- `.claude/commands/verify.md` — run verification checks
+- `.claude/commands/update-docs.md` — update documentation
+- `.claude/commands/orchestrate.md` — orchestrate multi-agent workflows
+
+**Specialist Agents (5 new)**
+- `aws-specialist.md` — AWS services: Lambda, SQS, IoT Core, RDS, S3, CloudWatch, boto3/aiobotocore
+- `fastapi-specialist.md` — FastAPI framework: DI, Pydantic v2 models, middleware, WebSocket, OAuth2/JWT, background tasks
+- `k8s-specialist.md` — Kubernetes & containers: Deployments, Helm, Dockerfile, HPA, probes, RBAC, network policies
+- `python-database-expert.md` — PostgreSQL + SQLAlchemy + Alembic: schema design, query optimization, migrations (replaces database-reviewer + database-optimizer)
+- `python-debugger.md` — Root cause analysis: pdb, profiling, tracing, memory analysis, hypothesis-driven debugging
+
+**Python-Specific Rules (5 new)**
+- `.claude/rules/python/coding-style.md` — Python coding conventions
+- `.claude/rules/python/hooks.md` — Python hook patterns
+- `.claude/rules/python/patterns.md` — Python design patterns
+- `.claude/rules/python/security.md` — Python security rules
+- `.claude/rules/python/testing.md` — Python testing conventions
+
+**JS Hook Scripts (5 new)**
+- `.claude/scripts/hooks/session-start.js` — inject context at session start
+- `.claude/scripts/hooks/session-end.js` — cleanup and session summary
+- `.claude/scripts/hooks/evaluate-session.js` — post-session evaluation
+- `.claude/scripts/hooks/pre-compact.js` — save state before context compaction
+- `.claude/scripts/hooks/suggest-compact.js` — suggest compaction at logical boundaries
+
+**JS Utility Libraries (4 new)**
+- `.claude/scripts/lib/package-manager.js` — package manager detection and operations
+- `.claude/scripts/lib/session-aliases.js` — session alias management
+- `.claude/scripts/lib/session-manager.js` — session lifecycle management
+- `.claude/scripts/lib/utils.js` — common utilities
+- TypeScript declarations (`.d.ts`) included for all modules
+
+### Changed
+
+**Agents (22 → 10) — consolidated and focused**
+- Updated `architect.md` — streamlined system design agent
+- Updated `code-reviewer.md` — rewritten for Python-focused review
+- Updated `tdd-guide.md` — updated TDD workflow
+
+**Documentation**
+- `README.md` — updated component counts, added commands/JS scripts/rules sections, removed 3-layer routing table
+- `QUICKSTART.md` — updated component inventory table, added JS hooks and libraries
+- `docs/workflow.md` — updated agent counts, added new slash commands to reference tables
+
+### Removed
+
+**Agents (12 removed)**
+- `api-designer.md`, `backend-developer.md`, `build-error-resolver.md` — superseded by specialist agents
+- `database-optimizer.md`, `database-reviewer.md` — merged into `python-database-expert.md`
+- `doc-updater.md`, `e2e-runner.md`, `refactor-cleaner.md` — low-value generalist agents
+- `go-build-resolver.md`, `go-reviewer.md` — Go-specific agents removed (Python focus)
+- `python-pro.md`, `python-reviewer.md` — merged into `code-reviewer.md`
+- `qa-expert.md` — merged into `tdd-guide.md`
+- `perplexity-research.md` — superseded by `perplexity-deep-search` skill
+- `vapi-ai-expert.md` — domain-specific, not general-purpose
+
+**Commands (1 removed)**
+- `dev-docs.md` — replaced by `/update-docs`
+
+**Skills (30 removed) — massive cleanup**
+- Language-specific: `cpp-coding-standards`, `cpp-testing`, `golang-patterns`, `golang-testing`, `java-coding-standards`, `jpa-patterns`
+- Backend frameworks: `backend-dev-guidelines` (+ resources), `backend-patterns`, `route-tester`
+- Domain-specific: `clickhouse-io`, `nutrient-document-processing`, `error-tracking`, `ralph-prd` (+ references/scripts)
+- Architecture: `api-design`, `content-hash-cache-pattern`, `cost-aware-llm-pipeline`, `iterative-retrieval`, `regex-vs-llm-structured-text`
+- Infrastructure: `database-migrations`, `e2e-testing`, `frontend-patterns`, `eval-harness`
+- Meta: `skill-developer`, `configure-ecc`, `project-guidelines-example`, `security-scan`
+- Git: `git` (+ workflows)
+- Learning: `continuous-learning`, `continuous-learning-v2` (+ agents/hooks/scripts/config)
+- Testing: `python-testing-patterns` (+ resources) — replaced by `python-testing` skill
+
+**Other**
+- `.claude/skills/skill-rules.json` — removed from personal config (routing table only applies to target projects via `setup_target_project.py`)
+
+---
+
 ## [2.0.0] — 2026-02-21
 
 ### Added

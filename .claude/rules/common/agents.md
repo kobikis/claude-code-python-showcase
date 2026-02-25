@@ -4,17 +4,31 @@
 
 Located in `~/.claude/agents/`:
 
+### Core Workflow
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
 | planner | Implementation planning | Complex features, refactoring |
-| architect | System design | Architectural decisions |
+| architect | System design + API design | Architectural decisions, API contracts |
 | tdd-guide | Test-driven development | New features, bug fixes |
-| code-reviewer | Code review | After writing code |
+| code-reviewer | Python code review | After writing code |
 | security-reviewer | Security analysis | Before commits |
-| build-error-resolver | Fix build errors | When build fails |
-| e2e-runner | E2E testing | Critical user flows |
-| refactor-cleaner | Dead code cleanup | Code maintenance |
-| doc-updater | Documentation | Updating docs |
+
+### Stack-Specific
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| fastapi-specialist | FastAPI framework | DI, Pydantic v2, middleware, WebSocket, auth |
+| aws-specialist | AWS services | Lambda, SQS, IoT Core, RDS, S3, CloudWatch |
+| k8s-specialist | Kubernetes & containers | Deployments, Helm, Dockerfile, HPA, probes |
+
+### Database
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| python-database-expert | PostgreSQL + SQLAlchemy + Alembic | Schema, queries, migrations, optimization |
+
+### Debugging
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| python-debugger | Root cause analysis | Hard bugs, memory leaks, async issues |
 
 ## Immediate Agent Usage
 
@@ -23,6 +37,10 @@ No user prompt needed:
 2. Code just written/modified - Use **code-reviewer** agent
 3. Bug fix or new feature - Use **tdd-guide** agent
 4. Architectural decision - Use **architect** agent
+5. FastAPI endpoint work - Use **fastapi-specialist** agent
+6. AWS service integration - Use **aws-specialist** agent
+7. K8s manifests or Dockerfiles - Use **k8s-specialist** agent
+8. Database work - Use **python-database-expert** agent
 
 ## Parallel Task Execution
 
@@ -38,12 +56,3 @@ Launch 3 agents in parallel:
 # BAD: Sequential when unnecessary
 First agent 1, then agent 2, then agent 3
 ```
-
-## Multi-Perspective Analysis
-
-For complex problems, use split role sub-agents:
-- Factual reviewer
-- Senior engineer
-- Security expert
-- Consistency reviewer
-- Redundancy checker

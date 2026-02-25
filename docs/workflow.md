@@ -24,10 +24,14 @@ $ ./.claude/install.sh --mcp
 ```
 
 What this puts in `~/.claude/` (available in every project):
-- 22 general-purpose agents (planner, code-reviewer, tdd-guide, security-reviewer, ...)
-- 42 personal skills (python-patterns, postgres-patterns, async-python-patterns, ...)
-- 8 global rules (coding-style, testing, security, git-workflow, ...)
-- 4 safety hooks (block-dangerous-bash, protect-files, validate-sql, session-context)
+- 10 specialist agents (planner, architect, tdd-guide, code-reviewer, security-reviewer, fastapi-specialist, aws-specialist, k8s-specialist, python-database-expert, python-debugger)
+- 12 curated skills (python-patterns, postgres-patterns, async-python-patterns, docker-patterns, ...)
+- 13 rules (8 common + 5 Python-specific)
+- 4 shell hook scripts (block-dangerous-bash, protect-files, validate-sql, session-context)
+- 5 JS hook scripts (session-start, session-end, evaluate-session, pre-compact, suggest-compact)
+- 9 slash commands (/pr, /plan, /tdd, /code-review, /build-fix, /verify, /test-coverage, /update-docs, /orchestrate)
+
+> **Note:** The personal config uses explicit agent invocation and slash commands — no automatic skill routing. The 3-layer routing architecture (skill-rules.json → CLAUDE.md) is only generated for target projects via `setup_target_project.py`.
 
 ---
 
@@ -59,7 +63,7 @@ $ python /path/to/claude-code-python-showcase/compile_rules.py \
 
 What `--all` installs into `.claude/` inside your project:
 - Domain-specific skills with routing rules (`skill-rules.json`)
-- Orchestrator agent + 5 specialist agents
+- Orchestrator agent + specialist agents
 - Session-start hook registered in `.claude/settings.json`
 - Project slash commands
 
@@ -154,23 +158,6 @@ Review the drafts, correct anything wrong about your project structure, then:
 > Looks good except <corrections>. Now write both files.
 ```
 
-### Option C — Fully autonomous via /ralph-prd
-
-```bash
-$ claude
-```
-
-```
-> /ralph-prd <paste PRD title and description>
-```
-
-Claude creates a structured PRD document. Then convert it for autonomous execution:
-```
-> /ralph-prd convert ./docs/prd/feature-name/prd.md
-```
-
-This produces a structured JSON that drives autonomous phase execution. See the ralph-prd skill for details.
-
 ---
 
 ## Part 4 — Implementation Workflow
@@ -182,29 +169,15 @@ $ cd my-new-project
 $ claude
 ```
 
-At session start the session-start hook fires automatically and prints:
-```
-## Active Skill Routes
-- webhook-security | keywords: webhook, signature, hmac | agent: webhook-validator
-- api-security     | keywords: auth, jwt, api key      | agent: security-auditor
-- async-kafka      | keywords: kafka, consumer, dlq    | agent: kafka-optimizer
-...
-
-## Active Project Context
-### CONTEXT.md
-# Context: Post Management API
-...
-
-### TASK.md
-...
----
-Orchestrator: Use Task tool with orchestrator agent for complex tasks.
-```
-
-No input needed — routing table and project context are loaded before you type anything.
+At session start the session-start hook fires automatically and prints project context and routing information. No input needed — context is loaded before you type anything.
 
 ### Step 2: Plan the implementation
 
+```
+> /plan
+```
+
+Or manually:
 ```
 > Use the planner agent to create an implementation plan for dev/active/TASK.md.
   Output the plan to dev/active/PLAN.md.
@@ -227,6 +200,11 @@ Edit PLAN.md if anything is wrong, then move to Step 3.
 
 For each phase in PLAN.md:
 
+```
+> /tdd
+```
+
+Or manually:
 ```
 > Use tdd-guide agent to implement Phase 1 from dev/active/PLAN.md
 ```
@@ -257,6 +235,11 @@ If something is wrong:
 
 ### Step 4: Code review after each phase
 
+```
+> /code-review
+```
+
+Or manually:
 ```
 > Use code-reviewer agent on the files created in Phase 1:
   app/models/post.py, app/repositories/post_repository.py
@@ -338,6 +321,20 @@ The `/pr` command:
 | `alembic revision --autogenerate -m "..."` | Generate migration |
 | `alembic upgrade head` | Apply migration |
 
+### Slash commands (personal config)
+
+| Command | What it does |
+|---------|-------------|
+| `/plan` | Restate requirements, create implementation plan |
+| `/tdd` | Enforce TDD workflow for current phase |
+| `/code-review` | Run code review on changed files |
+| `/build-fix` | Build and iteratively fix errors |
+| `/test-coverage` | Analyze and report test coverage |
+| `/verify` | Run verification checks |
+| `/update-docs` | Update documentation |
+| `/orchestrate` | Orchestrate multi-agent workflow |
+| `/pr` | Create GitHub pull request |
+
 ### Inside Claude Code session (chat prompts)
 
 | Prompt | What it does |
@@ -346,9 +343,10 @@ The `/pr` command:
 | `Use tdd-guide agent to implement Phase N from PLAN.md` | TDD implementation for one phase |
 | `Use code-reviewer on <files>` | Reviews against global rules |
 | `Use security-reviewer on <files>` | Security audit |
+| `Use fastapi-specialist for <endpoint>` | FastAPI-specific guidance |
+| `Use python-database-expert for <query>` | Database optimization |
+| `Use python-debugger for <issue>` | Root cause analysis |
 | `Use orchestrator agent to implement TASK.md end-to-end` | Full autonomous chain (see below) |
-| `/pr` | Creates GitHub pull request |
-| `/compact` | Compact context (do at phase boundaries) |
 
 ### Slash commands (Claude Code built-in)
 
@@ -357,7 +355,6 @@ The `/pr` command:
 | `/compact` | Summarise and compress context |
 | `/clear` | Clear session history |
 | `/help` | List all available commands |
-| `/pr` | Create PR (from your personal config) |
 
 ---
 
@@ -368,6 +365,11 @@ If you trust the plan and want to reduce manual prompting:
 ### Option A: Orchestrator chains all phases
 
 ```
+> /orchestrate
+```
+
+Or manually:
+```
 > Read dev/active/TASK.md and dev/active/PLAN.md.
   Use orchestrator agent to implement all phases end-to-end:
   dispatch to tdd-guide for each phase, run tests after each phase,
@@ -377,27 +379,14 @@ If you trust the plan and want to reduce manual prompting:
 
 Enable auto-accept in Claude Code settings (Shift+Tab to toggle permission mode to auto-accept), then start this prompt. You review the final output rather than each phase.
 
-### Option B: /ralph-prd full autonomous execution
-
-```bash
-$ claude
-```
-
-```
-> /ralph-prd convert ./docs/prd/posts/prd.md
-```
-
-Ralph-PRD reads the PRD, structures it into phases, and executes them sequentially with minimal human input. Best for well-defined, bounded features.
-
 ### When to use each
 
 | Situation | Recommended path |
 |-----------|-----------------|
 | New feature, unknown complexity | Manual (Steps 1–8 above) |
 | Clear spec, familiar domain | Orchestrator chains phases |
-| PRD exists as a document | /ralph-prd convert |
 | Spike or exploration | Manual only — autonomy needs a clear target |
-| Hotfix | Skip planning, go straight to tdd-guide |
+| Hotfix | Skip planning, go straight to `/tdd` |
 
 ---
 
@@ -411,7 +400,7 @@ Long sessions accumulate context. Compact at logical boundaries to avoid mid-tas
 /compact  ← after debugging, before continuing new work
 ```
 
-The session-start hook re-injects CONTEXT.md + TASK.md after every compaction, so project context is always restored. Keep TASK.md updated with completed checkboxes so the re-injected context reflects current progress.
+The session-start hook re-injects CONTEXT.md + TASK.md after every compaction, so project context is always restored. The `suggest-compact.js` hook also proactively suggests compaction at logical boundaries. Keep TASK.md updated with completed checkboxes so the re-injected context reflects current progress.
 
 ---
 

@@ -59,6 +59,20 @@ python setup_target_project.py --target /path/to/project --component hooks
 
 ---
 
+## What's included
+
+| Component | Count | Highlights |
+|-----------|-------|------------|
+| Agents | 10 | planner, architect, tdd-guide, fastapi-specialist, aws-specialist, k8s-specialist, python-debugger |
+| Commands | 9 | /pr, /plan, /tdd, /code-review, /build-fix, /verify, /test-coverage, /update-docs, /orchestrate |
+| Skills | 12 | python-patterns, async-python-patterns, postgres-patterns, docker-patterns, security-review, tdd-workflow |
+| Rules | 13 | 8 common (coding-style, testing, security, ...) + 5 Python-specific |
+| Shell hooks | 4 | block-dangerous-bash, protect-files, session-context, validate-sql |
+| JS hook scripts | 5 | session-start, session-end, evaluate-session, pre-compact, suggest-compact |
+| JS libraries | 4 | package-manager, session-aliases, session-manager, utils |
+
+---
+
 ## How skill routing works
 
 After install, skills activate automatically via 3 layers:
