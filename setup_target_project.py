@@ -17,6 +17,7 @@ import sys
 import json
 import shutil
 import argparse
+import traceback
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
