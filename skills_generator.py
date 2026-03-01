@@ -23,6 +23,7 @@ SKILL_NAMES = [
     "perplexity-deep-search",
     "verification-loop",
     "strategic-compact",
+    "skill-architect",
 ]
 
 # Routing metadata for skill-rules.json generation.
@@ -154,6 +155,21 @@ SKILL_METADATA: dict[str, dict] = {
             "strategic.*?(compact|summary)",
         ],
         "file_paths": [],
+    },
+    "skill-architect": {
+        "description": "Build reusable Claude Code skills (SKILL.md files) from workflow descriptions",
+        "keywords": [
+            "create skill",
+            "build skill",
+            "encode workflow",
+            "skill architect",
+        ],
+        "intent_patterns": [
+            "(create|build|write|make).*?skill",
+            "encode.*?(workflow|process|task)",
+            "skill.*?(template|architect|framework)",
+        ],
+        "file_paths": [".claude/skills/**/*"],
     },
 }
 

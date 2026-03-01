@@ -261,6 +261,27 @@
       ],
       "filePaths": [],
       "message": "Consider using the `strategic-compact` skill for this task."
+    },
+    {
+      "name": "skill-architect",
+      "type": "suggest",
+      "priority": "high",
+      "description": "Build reusable Claude Code skills (SKILL.md files) from workflow descriptions",
+      "keywords": [
+        "create skill",
+        "build skill",
+        "encode workflow",
+        "skill architect"
+      ],
+      "intentPatterns": [
+        "(create|build|write|make).*?skill",
+        "encode.*?(workflow|process|task)",
+        "skill.*?(template|architect|framework)"
+      ],
+      "filePaths": [
+        ".claude/skills/**/*"
+      ],
+      "message": "Consider using the `skill-architect` skill for this task."
     }
   ],
   "globalSettings": {
