@@ -4,21 +4,21 @@ description: Enforce test-driven development workflow. Scaffold interfaces, gene
 
 # TDD Command
 
-This command invokes the **tdd-guide** agent to enforce test-driven development methodology.
+This command invokes the **tdd-guide** agent to enforce test-driven development methodology using **Python + pytest**.
 
 ## What This Command Does
 
-1. **Scaffold Interfaces** - Define types/interfaces first
-2. **Generate Tests First** - Write failing tests (RED)
+1. **Scaffold Interfaces** - Define types/dataclasses/Pydantic models first
+2. **Generate Tests First** - Write failing pytest tests (RED)
 3. **Implement Minimal Code** - Write just enough to pass (GREEN)
 4. **Refactor** - Improve code while keeping tests green (REFACTOR)
-5. **Verify Coverage** - Ensure 80%+ test coverage
+5. **Verify Coverage** - Ensure 80%+ test coverage via `pytest --cov`
 
 ## When to Use
 
 Use `/tdd` when:
 - Implementing new features
-- Adding new functions/components
+- Adding new functions/classes
 - Fixing bugs (write test that reproduces bug first)
 - Refactoring existing code
 - Building critical business logic
@@ -27,7 +27,7 @@ Use `/tdd` when:
 
 The tdd-guide agent will:
 
-1. **Define interfaces** for inputs/outputs
+1. **Define interfaces** using dataclasses, Pydantic models, or type hints
 2. **Write tests that will FAIL** (because code doesn't exist yet)
 3. **Run tests** and verify they fail for the right reason
 4. **Write minimal implementation** to make tests pass
@@ -40,7 +40,7 @@ The tdd-guide agent will:
 ```
 RED → GREEN → REFACTOR → REPEAT
 
-RED:      Write a failing test
+RED:      Write a failing pytest test
 GREEN:    Write minimal code to pass
 REFACTOR: Improve code, keep tests passing
 REPEAT:   Next feature/scenario
@@ -56,198 +56,140 @@ Agent (tdd-guide):
 
 ## Step 1: Define Interface (SCAFFOLD)
 
-```typescript
-// lib/liquidity.ts
-export interface MarketData {
-  totalVolume: number
-  bidAskSpread: number
-  activeTraders: number
-  lastTradeTime: Date
-}
+```python
+# src/liquidity.py
+from dataclasses import dataclass
+from datetime import datetime
 
-export function calculateLiquidityScore(market: MarketData): number {
-  // TODO: Implementation
-  throw new Error('Not implemented')
-}
+
+@dataclass(frozen=True)
+class MarketData:
+    total_volume: float
+    bid_ask_spread: float
+    active_traders: int
+    last_trade_time: datetime
+
+
+def calculate_liquidity_score(market: MarketData) -> float:
+    raise NotImplementedError
 ```
 
-## Step 2: Write Failing Test (RED)
+## Step 2: Write Failing Tests (RED)
 
-```typescript
-// lib/liquidity.test.ts
-import { calculateLiquidityScore } from './liquidity'
+```python
+# tests/test_liquidity.py
+from datetime import datetime, timedelta
+import pytest
+from src.liquidity import MarketData, calculate_liquidity_score
 
-describe('calculateLiquidityScore', () => {
-  it('should return high score for liquid market', () => {
-    const market = {
-      totalVolume: 100000,
-      bidAskSpread: 0.01,
-      activeTraders: 500,
-      lastTradeTime: new Date()
-    }
 
-    const score = calculateLiquidityScore(market)
+def liquid_market() -> MarketData:
+    return MarketData(
+        total_volume=100_000,
+        bid_ask_spread=0.01,
+        active_traders=500,
+        last_trade_time=datetime.utcnow(),
+    )
 
-    expect(score).toBeGreaterThan(80)
-    expect(score).toBeLessThanOrEqual(100)
-  })
 
-  it('should return low score for illiquid market', () => {
-    const market = {
-      totalVolume: 100,
-      bidAskSpread: 0.5,
-      activeTraders: 2,
-      lastTradeTime: new Date(Date.now() - 86400000) // 1 day ago
-    }
+def illiquid_market() -> MarketData:
+    return MarketData(
+        total_volume=100,
+        bid_ask_spread=0.5,
+        active_traders=2,
+        last_trade_time=datetime.utcnow() - timedelta(days=1),
+    )
 
-    const score = calculateLiquidityScore(market)
 
-    expect(score).toBeLessThan(30)
-    expect(score).toBeGreaterThanOrEqual(0)
-  })
+def test_high_score_for_liquid_market():
+    score = calculate_liquidity_score(liquid_market())
+    assert 80 < score <= 100
 
-  it('should handle edge case: zero volume', () => {
-    const market = {
-      totalVolume: 0,
-      bidAskSpread: 0,
-      activeTraders: 0,
-      lastTradeTime: new Date()
-    }
 
-    const score = calculateLiquidityScore(market)
+def test_low_score_for_illiquid_market():
+    score = calculate_liquidity_score(illiquid_market())
+    assert 0 <= score < 30
 
-    expect(score).toBe(0)
-  })
-})
+
+def test_zero_volume_returns_zero():
+    market = MarketData(
+        total_volume=0,
+        bid_ask_spread=0.0,
+        active_traders=0,
+        last_trade_time=datetime.utcnow(),
+    )
+    assert calculate_liquidity_score(market) == 0.0
 ```
 
-## Step 3: Run Tests - Verify FAIL
+## Step 3: Run Tests – Verify FAIL
 
 ```bash
-npm test lib/liquidity.test.ts
+pytest tests/test_liquidity.py -v
 
-FAIL lib/liquidity.test.ts
-  ✕ should return high score for liquid market (2 ms)
-    Error: Not implemented
-
-1 test failed, 0 passed
+FAILED tests/test_liquidity.py::test_high_score_for_liquid_market
+  NotImplementedError
 ```
 
 ✅ Tests fail as expected. Ready to implement.
 
 ## Step 4: Implement Minimal Code (GREEN)
 
-```typescript
-// lib/liquidity.ts
-export function calculateLiquidityScore(market: MarketData): number {
-  // Handle zero volume edge case
-  if (market.totalVolume === 0) {
-    return 0
-  }
+```python
+# src/liquidity.py
+from dataclasses import dataclass
+from datetime import datetime, timezone
 
-  // Calculate component scores (0-100 scale)
-  const volumeScore = Math.min(market.totalVolume / 1000, 100)
-  const spreadScore = Math.max(100 - (market.bidAskSpread * 1000), 0)
-  const traderScore = Math.min(market.activeTraders / 10, 100)
+WEIGHTS = {"volume": 0.4, "spread": 0.3, "traders": 0.2, "recency": 0.1}
+SCALE = {"volume": 1_000, "spread": 1_000, "traders": 10, "recency_penalty": 10}
 
-  // Recent activity bonus
-  const hoursSinceLastTrade = (Date.now() - market.lastTradeTime.getTime()) / (1000 * 60 * 60)
-  const recencyScore = Math.max(100 - (hoursSinceLastTrade * 10), 0)
 
-  // Weighted average
-  const score = (
-    volumeScore * 0.4 +
-    spreadScore * 0.3 +
-    traderScore * 0.2 +
-    recencyScore * 0.1
-  )
+def _clamp(value: float, lo: float = 0.0, hi: float = 100.0) -> float:
+    return max(lo, min(hi, value))
 
-  return Math.min(Math.max(score, 0), 100) // Clamp to 0-100
-}
+
+def calculate_liquidity_score(market: MarketData) -> float:
+    if market.total_volume == 0:
+        return 0.0
+
+    volume_score  = _clamp(market.total_volume / SCALE["volume"])
+    spread_score  = _clamp(100 - market.bid_ask_spread * SCALE["spread"])
+    trader_score  = _clamp(market.active_traders / SCALE["traders"])
+
+    now = datetime.now(tz=timezone.utc)
+    last = market.last_trade_time.replace(tzinfo=timezone.utc) if market.last_trade_time.tzinfo is None else market.last_trade_time
+    hours_ago = (now - last).total_seconds() / 3600
+    recency_score = _clamp(100 - hours_ago * SCALE["recency_penalty"])
+
+    return _clamp(
+        volume_score  * WEIGHTS["volume"] +
+        spread_score  * WEIGHTS["spread"] +
+        trader_score  * WEIGHTS["traders"] +
+        recency_score * WEIGHTS["recency"]
+    )
 ```
 
-## Step 5: Run Tests - Verify PASS
+## Step 5: Run Tests – Verify PASS
 
 ```bash
-npm test lib/liquidity.test.ts
+pytest tests/test_liquidity.py -v
 
-PASS lib/liquidity.test.ts
-  ✓ should return high score for liquid market (3 ms)
-  ✓ should return low score for illiquid market (2 ms)
-  ✓ should handle edge case: zero volume (1 ms)
+PASSED tests/test_liquidity.py::test_high_score_for_liquid_market
+PASSED tests/test_liquidity.py::test_low_score_for_illiquid_market
+PASSED tests/test_liquidity.py::test_zero_volume_returns_zero
 
-3 tests passed
+3 passed in 0.12s
 ```
 
 ✅ All tests passing!
 
-## Step 6: Refactor (IMPROVE)
-
-```typescript
-// lib/liquidity.ts - Refactored with constants and better readability
-const WEIGHTS = {
-  VOLUME: 0.4,
-  SPREAD: 0.3,
-  TRADERS: 0.2,
-  RECENCY: 0.1,
-} as const
-
-const SCALE_FACTORS = {
-  VOLUME: 1000,
-  SPREAD: 1000,
-  TRADERS: 10,
-  RECENCY_PENALTY: 10,
-} as const
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max)
-}
-
-export function calculateLiquidityScore(market: MarketData): number {
-  if (market.totalVolume === 0) return 0
-
-  const volumeScore = Math.min(market.totalVolume / SCALE_FACTORS.VOLUME, 100)
-  const spreadScore = clamp(100 - (market.bidAskSpread * SCALE_FACTORS.SPREAD), 0, 100)
-  const traderScore = Math.min(market.activeTraders / SCALE_FACTORS.TRADERS, 100)
-
-  const hoursSinceLastTrade = (Date.now() - market.lastTradeTime.getTime()) / (1000 * 60 * 60)
-  const recencyScore = clamp(100 - (hoursSinceLastTrade * SCALE_FACTORS.RECENCY_PENALTY), 0, 100)
-
-  const weightedScore =
-    volumeScore * WEIGHTS.VOLUME +
-    spreadScore * WEIGHTS.SPREAD +
-    traderScore * WEIGHTS.TRADERS +
-    recencyScore * WEIGHTS.RECENCY
-
-  return clamp(weightedScore, 0, 100)
-}
-```
-
-## Step 7: Verify Tests Still Pass
+## Step 6: Check Coverage
 
 ```bash
-npm test lib/liquidity.test.ts
+pytest tests/test_liquidity.py --cov=src.liquidity --cov-report=term-missing
 
-PASS lib/liquidity.test.ts
-  ✓ should return high score for liquid market (3 ms)
-  ✓ should return low score for illiquid market (2 ms)
-  ✓ should handle edge case: zero volume (1 ms)
-
-3 tests passed
-```
-
-✅ Refactoring complete, tests still passing!
-
-## Step 8: Check Coverage
-
-```bash
-npm test -- --coverage lib/liquidity.test.ts
-
-File           | % Stmts | % Branch | % Funcs | % Lines
----------------|---------|----------|---------|--------
-liquidity.ts   |   100   |   100    |   100   |   100
-
-Coverage: 100% ✅ (Target: 80%)
+Name               Stmts   Miss  Cover
+--------------------------------------
+src/liquidity.py      18      0   100%
 ```
 
 ✅ TDD session complete!
@@ -260,7 +202,7 @@ Coverage: 100% ✅ (Target: 80%)
 - ✅ Run tests and verify they FAIL before implementing
 - ✅ Write minimal code to make tests pass
 - ✅ Refactor only after tests are green
-- ✅ Add edge cases and error scenarios
+- ✅ Use `pytest` fixtures and `@pytest.mark.parametrize` for edge cases
 - ✅ Aim for 80%+ coverage (100% for critical code)
 
 **DON'T:**
@@ -275,15 +217,15 @@ Coverage: 100% ✅ (Target: 80%)
 
 **Unit Tests** (Function-level):
 - Happy path scenarios
-- Edge cases (empty, null, max values)
-- Error conditions
+- Edge cases (empty, None, max values)
+- Error conditions and exceptions
 - Boundary values
+- Use `@pytest.mark.parametrize` for table-driven tests
 
 **Integration Tests** (Component-level):
-- API endpoints
-- Database operations
-- External service calls
-- React components with hooks
+- FastAPI endpoints via `httpx.AsyncClient`
+- Database operations via SQLAlchemy + test fixtures
+- External service calls with `respx` or `pytest-mock`
 
 **E2E Tests** (use `/e2e` command):
 - Critical user flows
@@ -298,6 +240,11 @@ Coverage: 100% ✅ (Target: 80%)
   - Authentication logic
   - Security-critical code
   - Core business logic
+
+Run coverage:
+```bash
+pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+```
 
 ## Important Notes
 
