@@ -282,6 +282,26 @@
         ".claude/skills/**/*"
       ],
       "message": "Consider using the `skill-architect` skill for this task."
+    },
+    {
+      "name": "pr-review",
+      "type": "suggest",
+      "priority": "high",
+      "description": "Reviews a GitHub PR diff for correctness, security, Python best practices, and test coverage",
+      "keywords": [
+        "pr review",
+        "pull request",
+        "code review",
+        "review pr",
+        "gh pr"
+      ],
+      "intentPatterns": [
+        "(review|check|analyze).*?(pr|pull.request)",
+        "pr.*?(review|feedback|comments)",
+        "(what.*?wrong|issues).*?(pr|pull.request)"
+      ],
+      "filePaths": [],
+      "message": "Consider using the `pr-review` skill for this task."
     }
   ],
   "globalSettings": {

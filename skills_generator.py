@@ -24,6 +24,7 @@ SKILL_NAMES = [
     "verification-loop",
     "strategic-compact",
     "skill-architect",
+    "pr-review",
 ]
 
 # Routing metadata for skill-rules.json generation.
@@ -170,6 +171,16 @@ SKILL_METADATA: dict[str, dict] = {
             "skill.*?(template|architect|framework)",
         ],
         "file_paths": [".claude/skills/**/*"],
+    },
+    "pr-review": {
+        "description": "Reviews a GitHub PR diff for correctness, security, Python best practices, and test coverage",
+        "keywords": ["pr review", "pull request", "code review", "review pr", "gh pr"],
+        "intent_patterns": [
+            "(review|check|analyze).*?(pr|pull.request)",
+            "pr.*?(review|feedback|comments)",
+            "(what.*?wrong|issues).*?(pr|pull.request)",
+        ],
+        "file_paths": [],
     },
 }
 
