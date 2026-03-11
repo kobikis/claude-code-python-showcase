@@ -1,6 +1,6 @@
 ---
 name: deployment-patterns
-description: Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.
+description: Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications. Use when deploying an application, setting up CI/CD, writing GitHub Actions workflows, configuring health checks, or asking about rollback strategies.
 ---
 
 # Deployment Patterns
@@ -424,3 +424,11 @@ Before any production deployment:
 - [ ] Database migration tested against production-sized data
 - [ ] Runbook for common failure scenarios
 - [ ] On-call rotation and escalation path defined
+
+## Examples
+
+**Input**: "Set up CI/CD for my FastAPI app"
+**Output**: GitHub Actions workflow with lint, test, build, and deploy stages; health check on `/health`; rollback on failed deploy.
+
+**Input**: "Add a health check to my Docker container"
+**Output**: `HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1` with interval/timeout/retries configured.

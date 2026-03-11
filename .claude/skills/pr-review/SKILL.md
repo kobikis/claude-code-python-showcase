@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: "Reviews a GitHub pull request diff and produces a structured report covering correctness, security, Python best practices, and test coverage."
+description: "Reviews a GitHub pull request diff and produces a structured report covering correctness, security, Python best practices, and test coverage. Use when asked to review a PR, check a pull request, analyze a diff, or validate code before merging."
 allowed-tools: Bash, Read, Grep, Glob
 ---
 

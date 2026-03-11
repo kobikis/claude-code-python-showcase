@@ -1,6 +1,6 @@
 ---
 name: python-patterns
-description: "Python development principles and decision-making. Framework selection, async patterns, type hints, project structure. Teaches thinking, not copying."
+description: "Python development principles and decision-making. Framework selection, async patterns, type hints, project structure. Use when starting a Python project, choosing a framework, structuring code, adding type hints, or asking about Python best practices."
 allowed-tools: Read, Write, Edit, Glob, Grep
 risk: unknown
 source: community
@@ -445,3 +445,11 @@ Before implementing:
 ---
 
 > **Remember**: Python patterns are about decision-making for YOUR specific context. Don't copy code—think about what serves your application best.
+
+## Examples
+
+**Input**: "Should I use FastAPI or Django for my REST API?"
+**Output**: Decision matrix based on team size, async needs, and ORM requirements — with recommendation and rationale.
+
+**Input**: "How should I structure my Python project?"
+**Output**: Feature-based layout with `src/`, `tests/`, `pyproject.toml`, and clear separation of domain logic from infrastructure.

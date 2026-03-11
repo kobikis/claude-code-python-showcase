@@ -74,7 +74,7 @@ SKILL_AGENT_MAP: dict[str, str | None] = {
     "perplexity-deep-search": "planner",
     "verification-loop": "code-reviewer",
     "strategic-compact": None,
-    "skill-architect": "architect",
+    "skill-creator": "architect",
 }
 
 

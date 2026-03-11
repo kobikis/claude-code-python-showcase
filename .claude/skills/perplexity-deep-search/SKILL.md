@@ -1,5 +1,5 @@
 ---
-name: perplexity
+name: perplexity-deep-search
 description: "Deep search via Perplexity API. Three modes: search (quick facts), reason (complex analysis), research (in-depth reports). Returns AI-grounded answers with citations."
 homepage: https://docs.perplexity.ai
 metadata: {"clawdbot":{"emoji":"🔮","requires":{"bins":["curl","jq"]},"primaryEnv":"PERPLEXITY_API_KEY"}}
@@ -74,3 +74,13 @@ The script checks the env var first, then falls back to the file.
 - **Deep Research (sonar-deep-research):** ~$0.40/query (uses many searches + reasoning)
 
 Use `search` for everyday queries. Reserve `research` for when you truly need exhaustive analysis.
+
+## Error Handling
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `401 Unauthorized` | Invalid or missing API key | Check `PERPLEXITY_API_KEY` env var is set |
+| `429 Rate Limited` | Too many requests | Wait and retry; use `search` mode instead of `research` |
+| `500 Server Error` | Perplexity outage | Retry after 30s; fall back to web search |
+| Empty results | Query too specific | Broaden search terms |
+| Timeout | `research` mode is slow (~3-5 min) | Expected for deep research; use `search` for quick queries |

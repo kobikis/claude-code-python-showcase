@@ -1,6 +1,6 @@
 ---
 name: verification-loop
-description: "A comprehensive verification system for Claude Code sessions."
+description: "A comprehensive verification system for Claude Code sessions. Use when verifying an implementation is complete, validating code correctness, running a final check before committing, or asking to verify all requirements are met."
 ---
 
 # Verification Loop Skill
@@ -123,3 +123,11 @@ Run: /verify
 
 This skill complements PostToolUse hooks but provides deeper verification.
 Hooks catch issues immediately; this skill provides comprehensive review.
+
+## Examples
+
+**Input**: "Verify my auth implementation is complete"
+**Output**: Checklist run — confirms all endpoints secured, tokens validated, tests passing, no hardcoded secrets, error messages sanitized.
+
+**Input**: "Run a final check before I commit"
+**Output**: Verifies tests pass, coverage meets 80%, no linting errors, no debug code left, CLAUDE.md requirements satisfied.

@@ -1,6 +1,6 @@
 ---
 name: docker-patterns
-description: Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration.
+description: Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration. Use when writing a Dockerfile, setting up docker-compose, containerizing an app, or asking about container security and networking.
 ---
 
 # Docker Patterns
@@ -361,3 +361,11 @@ docker network inspect <project>_default
 # BAD: Putting secrets in docker-compose.yml
 # Use .env files (gitignored) or Docker secrets
 ```
+
+## Examples
+
+**Input**: "Containerize my Python FastAPI app"
+**Output**: Multi-stage Dockerfile with builder + slim runtime image, non-root user, `.dockerignore`, and `docker-compose.yml` with volume mounts for local dev.
+
+**Input**: "My containers need to talk to each other"
+**Output**: Docker Compose service with named network, service discovery by container name, and environment variables for connection strings.

@@ -1,6 +1,6 @@
 ---
 name: strategic-compact
-description: Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.
+description: Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction. Use when context is getting large, working on a long multi-phase task, or asking about context management strategies.
 ---
 
 # Strategic Compact Skill
@@ -100,3 +100,11 @@ Understanding what persists helps you compact with confidence:
 - [The Longform Guide](https://x.com/affaanmustafa/status/2014040193557471352) — Token optimization section
 - Memory persistence hooks — For state that survives compaction
 - `continuous-learning` skill — Extracts patterns before session ends
+
+## Examples
+
+**Input**: "We just finished planning, about to start coding"
+**Output**: Suggest `/compact` now — planning context is bulky, implementation plan is captured in TodoWrite, fresh context helps for coding.
+
+**Input**: "I'm mid-way through implementing the auth module"
+**Output**: Do NOT compact — losing current file context and variable state mid-implementation is costly. Wait until this module is complete.

@@ -23,7 +23,7 @@ SKILL_NAMES = [
     "perplexity-deep-search",
     "verification-loop",
     "strategic-compact",
-    "skill-architect",
+    "skill-creator",
     "pr-review",
 ]
 
@@ -157,18 +157,20 @@ SKILL_METADATA: dict[str, dict] = {
         ],
         "file_paths": [],
     },
-    "skill-architect": {
-        "description": "Build reusable Claude Code skills (SKILL.md files) from workflow descriptions",
+    "skill-creator": {
+        "description": "Create new skills, modify and improve existing skills, and measure skill performance",
         "keywords": [
             "create skill",
             "build skill",
-            "encode workflow",
-            "skill architect",
+            "improve skill",
+            "optimize skill",
+            "skill creator",
+            "run evals",
         ],
         "intent_patterns": [
             "(create|build|write|make).*?skill",
-            "encode.*?(workflow|process|task)",
-            "skill.*?(template|architect|framework)",
+            "(improve|optimize|iterate).*?skill",
+            "skill.*?(eval|benchmark|performance|test)",
         ],
         "file_paths": [".claude/skills/**/*"],
     },
