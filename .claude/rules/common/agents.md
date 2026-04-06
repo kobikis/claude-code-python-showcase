@@ -20,6 +20,13 @@ Located in `~/.claude/agents/`:
 | aws-specialist | AWS services | Lambda, SQS, IoT Core, RDS, S3, CloudWatch |
 | k8s-specialist | Kubernetes & containers | Deployments, Helm, Dockerfile, HPA, probes |
 
+### Voice AI & Telephony
+| Agent | Purpose | When to Use |
+|-------|---------|-------------|
+| pipecat-expert | Pipecat pipelines | Voice AI pipelines, STT/LLM/TTS, processors, transports |
+| twilio-expert | Twilio Voice | Voice API, Media Streams, TwiML, telephony webhooks |
+| vapi-expert | Vapi integration | Webhook payloads, call data, assistant config |
+
 ### Database
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
@@ -41,6 +48,9 @@ No user prompt needed:
 6. AWS service integration - Use **aws-specialist** agent
 7. K8s manifests or Dockerfiles - Use **k8s-specialist** agent
 8. Database work - Use **python-database-expert** agent
+9. Voice AI pipelines - Use **pipecat-expert** agent
+10. Twilio telephony - Use **twilio-expert** agent
+11. Vapi webhooks/calls - Use **vapi-expert** agent
 
 ## Parallel Task Execution
 

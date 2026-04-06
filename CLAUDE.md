@@ -348,6 +348,9 @@ For any non-trivial task, use the `/orchestrate` command or:
 | aws-specialist | AWS services integration |
 | k8s-specialist | Kubernetes + container infrastructure |
 | python-database-expert | PostgreSQL + SQLAlchemy + Alembic |
+| pipecat-expert | Real-time voice/multimodal AI pipelines |
+| twilio-expert | Twilio Programmable Voice + Media Streams |
+| vapi-expert | Vapi webhook integration + call data |
 | python-debugger | Root cause analysis and debugging |
 
 ## Skill Loading Instructions

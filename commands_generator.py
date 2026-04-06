@@ -18,6 +18,9 @@ COMMAND_NAMES = [
     "verify",
     "update-docs",
     "orchestrate",
+    "pipecat-rca",
+    "create-subagent",
+    "create-command",
 ]
 
 
