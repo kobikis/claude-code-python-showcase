@@ -51,6 +51,9 @@ For any non-trivial task, use the `/orchestrate` command or:
 | k8s-specialist | Kubernetes + container infrastructure |
 | python-database-expert | PostgreSQL + SQLAlchemy + Alembic |
 | python-debugger | Root cause analysis and debugging |
+| pipecat-expert | Real-time voice/multimodal AI pipelines |
+| twilio-expert | Twilio Programmable Voice + Media Streams |
+| vapi-expert | Vapi webhook integration + call data |
 
 ## Skill Loading Instructions
 

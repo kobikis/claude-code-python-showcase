@@ -353,24 +353,24 @@ python-patterns, async-python-patterns, python-testing, tdd-workflow,
 postgres-patterns, docker-patterns, deployment-patterns, security-review,
 design-doc-mermaid, perplexity-deep-search, verification-loop, strategic-compact
 
-### Agents (10)
+### Agents (13)
 Specialist agents copied from source `.claude/agents/`:
 planner, architect, tdd-guide, code-reviewer, security-reviewer,
 fastapi-specialist, aws-specialist, k8s-specialist, python-database-expert,
-python-debugger
+python-debugger, pipecat-expert, twilio-expert, vapi-expert
 
-### Commands (9)
+### Commands (12)
 Slash commands copied from source `.claude/commands/`:
 /pr, /plan, /tdd, /code-review, /build-fix, /test-coverage, /verify,
-/update-docs, /orchestrate
+/update-docs, /orchestrate, /pipecat-rca, /create-subagent, /create-command
 
 ### Hooks & Scripts
 - Shell/Python hooks in `.claude/hooks/`
 - JS hook scripts in `.claude/scripts/hooks/`
 - JS library modules in `.claude/scripts/lib/`
 
-### Rules (13)
-- 8 common rules in `.claude/rules/common/`
+### Rules (14)
+- 9 common rules in `.claude/rules/common/`
 - 5 Python-specific rules in `.claude/rules/python/`
 
 ## Usage
@@ -388,6 +388,9 @@ Skills activate automatically based on intent patterns and file paths.
 - `/test-coverage` - Analyze test coverage
 - `/build-fix` - Troubleshoot build failures
 - `/update-docs` - Update documentation
+- `/pipecat-rca` - Hypothesis-driven debugging for Python bots
+- `/create-subagent` - Create new agent definitions
+- `/create-command` - Create new slash commands
 
 ### Using Agents
 Agents are invoked via the Task tool based on routing rules in CLAUDE.md.
@@ -418,8 +421,8 @@ def interactive_menu(setup: ProjectSetup):
 
     print("Select components to install:")
     print("  1. Skills (12 pattern libraries)")
-    print("  2. Agents (10 specialist agents)")
-    print("  3. Slash Commands (9 commands)")
+    print("  2. Agents (13 specialist agents)")
+    print("  3. Slash Commands (12 commands)")
     print("  4. Hooks & Scripts (shell hooks + JS hooks + JS libs)")
     print("  5. Rules (8 common + 5 Python-specific)")
     print("  6. Example Implementations")

@@ -19,6 +19,9 @@ AGENT_NAMES = [
     "k8s-specialist",
     "python-database-expert",
     "python-debugger",
+    "pipecat-expert",
+    "twilio-expert",
+    "vapi-expert",
 ]
 
 
